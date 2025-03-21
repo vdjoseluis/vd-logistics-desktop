@@ -4,6 +4,8 @@ import com.google.cloud.firestore.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -28,10 +30,18 @@ public class FirebaseDataService {
         }
     }
     
-    public static void loadServices(JTable table, String statusCondition) {
+    public static void loadServices(JTable table, String statusCondition, JLabel loadingLabel, JScrollPane scrollPane) {
     CollectionReference services = db.collection("services");
     Query query = services.whereEqualTo("status", statusCondition)
-                          .orderBy("date", Query.Direction.ASCENDING);
+                          .orderBy("date", Query.Direction.ASCENDING);    
+    
+    SwingUtilities.invokeLater(() -> {
+       loadingLabel.setBounds(scrollPane.getX() + 640, scrollPane.getY() + 120, 100, 100);
+        scrollPane.getParent().add(loadingLabel); 
+        scrollPane.getParent().setComponentZOrder(loadingLabel, 0); 
+        loadingLabel.setVisible(true);
+        table.setVisible(false);  
+    });
 
     query.addSnapshotListener((snapshots, error) -> {
         if (error != null) {
@@ -73,8 +83,10 @@ public class FirebaseDataService {
         }
 
         SwingUtilities.invokeLater(() -> {
-            table.setModel(model); // Actualiza la tabla
+            table.setModel(model); // Actualiza la tabla            
             setColumnModel(table); 
+            loadingLabel.setVisible(false);
+            table.setVisible(true); 
         });
     });
 }

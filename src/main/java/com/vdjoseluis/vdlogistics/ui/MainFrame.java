@@ -1,6 +1,8 @@
 package com.vdjoseluis.vdlogistics.ui;
 
 import com.vdjoseluis.vdlogistics.firebase.FirebaseDataService;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 
 /**
  *
@@ -11,13 +13,15 @@ public class MainFrame extends javax.swing.JFrame {
     /**
      * Creates new form MainFrame
      */
-    
     public MainFrame() {
         initComponents();
-        this.setLocationRelativeTo(null);        
-                
-        FirebaseDataService.loadServices(confirmedTable, "Confirmado");
-        FirebaseDataService.loadServices(pendingTable, "Pendiente");        
+        loadingLabel.setVisible(true);
+        this.setLocationRelativeTo(null);
+        
+        loadingLabel.setBounds(mainScrollPanel.getX() + 50, mainScrollPanel.getY() + 50, 100, 100);
+
+        FirebaseDataService.loadServices(confirmedTable, "Confirmado", loadingLabel, mainScrollPanel);
+        FirebaseDataService.loadServices(pendingTable, "Pendiente", loadingLabel, mainScrollPanel);
     }
 
     /**
@@ -28,13 +32,17 @@ public class MainFrame extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        jPanel1 = new javax.swing.JPanel();
+        loadingLabel = new javax.swing.JLabel();
+        mainScrollPanel = new javax.swing.JScrollPane();
+        mainContent = new javax.swing.JPanel();
+        servicesPanel = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        confirmedScrollPanel = new javax.swing.JScrollPane();
         confirmedTable = new javax.swing.JTable();
         jLabel2 = new javax.swing.JLabel();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        pendingScrollPanel = new javax.swing.JScrollPane();
         pendingTable = new javax.swing.JTable();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
@@ -53,22 +61,44 @@ public class MainFrame extends javax.swing.JFrame {
         jMenu5 = new javax.swing.JMenu();
         jMenuItem10 = new javax.swing.JMenuItem();
 
+        loadingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        loadingLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/loaderSpinner.gif"))); // NOI18N
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("VD Logistics");
-        setPreferredSize(new java.awt.Dimension(1366, 768));
         setSize(new java.awt.Dimension(1366, 768));
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
 
-        jPanel1.setBackground(java.awt.SystemColor.activeCaption);
-        jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+        mainContent.setPreferredSize(new java.awt.Dimension(1366, 750));
+        mainContent.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                mainContentComponentResized(evt);
+            }
+        });
+        mainContent.setLayout(new java.awt.CardLayout());
+
+        servicesPanel.setBackground(java.awt.SystemColor.activeCaption);
+        servicesPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        servicesPanel.setLayout(new java.awt.GridBagLayout());
 
         jLabel1.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("Pendientes de Confirmar Cita");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(509, 360, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(40, 509, 0, 0);
+        servicesPanel.add(jLabel1, gridBagConstraints);
 
-        jScrollPane1.setAutoscrolls(true);
-        jScrollPane1.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(1100, 250));
+        confirmedScrollPanel.setAutoscrolls(true);
+        confirmedScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        confirmedScrollPanel.setPreferredSize(new java.awt.Dimension(1100, 250));
 
         confirmedTable.setAutoCreateRowSorter(true);
         confirmedTable.setBackground(java.awt.SystemColor.control);
@@ -77,24 +107,38 @@ public class MainFrame extends javax.swing.JFrame {
         confirmedTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         confirmedTable.setFillsViewportHeight(true);
         confirmedTable.setFocusable(false);
-        confirmedTable.setMaximumSize(new java.awt.Dimension(0, 0));
-        confirmedTable.setMinimumSize(new java.awt.Dimension(0, 0));
-        confirmedTable.setPreferredSize(new java.awt.Dimension(1100, 220));
+        confirmedTable.setPreferredSize(new java.awt.Dimension(1100, 224));
         confirmedTable.setRowHeight(40);
         confirmedTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         confirmedTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         confirmedTable.setShowGrid(false);
         confirmedTable.setShowVerticalLines(true);
-        jScrollPane1.setViewportView(confirmedTable);
+        confirmedScrollPanel.setViewportView(confirmedTable);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(133, 70, 1100, 250));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 224;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 0, 133);
+        servicesPanel.add(confirmedScrollPanel, gridBagConstraints);
 
         jLabel2.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Servicios Confirmados");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(549, 30, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(30, 549, 0, 0);
+        servicesPanel.add(jLabel2, gridBagConstraints);
 
-        jScrollPane2.setFont(new java.awt.Font("Lucida Console", 0, 12)); // NOI18N
+        pendingScrollPanel.setFont(new java.awt.Font("Lucida Console", 0, 12)); // NOI18N
 
         pendingTable.setAutoCreateRowSorter(true);
         pendingTable.setBackground(java.awt.SystemColor.control);
@@ -103,15 +147,29 @@ public class MainFrame extends javax.swing.JFrame {
         pendingTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         pendingTable.setFillsViewportHeight(true);
         pendingTable.setFocusable(false);
-        pendingTable.setMinimumSize(new java.awt.Dimension(0, 0));
-        pendingTable.setPreferredSize(new java.awt.Dimension(1100, 220));
+        pendingTable.setPreferredSize(new java.awt.Dimension(1100, 224));
         pendingTable.setRowHeight(40);
         pendingTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         pendingTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         pendingTable.setShowHorizontalLines(false);
-        jScrollPane2.setViewportView(pendingTable);
+        pendingScrollPanel.setViewportView(pendingTable);
 
-        jPanel1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(133, 400, 1100, 250));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 224;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 154, 133);
+        servicesPanel.add(pendingScrollPanel, gridBagConstraints);
+
+        mainContent.add(servicesPanel, "card2");
+
+        mainScrollPanel.setViewportView(mainContent);
 
         jMenu1.setText("Operarios");
 
@@ -174,15 +232,11 @@ public class MainFrame extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 1366, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(mainScrollPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1366, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 768, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(mainScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 783, Short.MAX_VALUE)
         );
 
         pack();
@@ -191,6 +245,22 @@ public class MainFrame extends javax.swing.JFrame {
     private void jMenuItem10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem10ActionPerformed
         System.exit(0);
     }//GEN-LAST:event_jMenuItem10ActionPerformed
+
+    private void mainContentComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_mainContentComponentResized
+        // TODO add your handling code here:
+    }//GEN-LAST:event_mainContentComponentResized
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        boolean maximized = (getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH;
+
+        if (maximized) {
+            mainScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+            mainScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        } else {
+            mainScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            mainScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        }
+    }//GEN-LAST:event_formComponentResized
 
     /**
      * @param args the command line arguments
@@ -226,9 +296,10 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
     }
-   
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane confirmedScrollPanel;
     private javax.swing.JTable confirmedTable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -248,9 +319,11 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem7;
     private javax.swing.JMenuItem jMenuItem8;
     private javax.swing.JMenuItem jMenuItem9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel loadingLabel;
+    private javax.swing.JPanel mainContent;
+    private javax.swing.JScrollPane mainScrollPanel;
+    private javax.swing.JScrollPane pendingScrollPanel;
     private javax.swing.JTable pendingTable;
+    private javax.swing.JPanel servicesPanel;
     // End of variables declaration//GEN-END:variables
 }
