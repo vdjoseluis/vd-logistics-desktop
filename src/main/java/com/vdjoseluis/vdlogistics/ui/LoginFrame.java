@@ -45,16 +45,17 @@ public class LoginFrame extends javax.swing.JFrame {
         setUndecorated(true);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jButtonExit.setBackground(new java.awt.Color(9, 25, 77));
+        jButtonExit.setBackground(new java.awt.Color(3, 121, 157));
         jButtonExit.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         jButtonExit.setForeground(new java.awt.Color(255, 255, 255));
         jButtonExit.setText("Salir");
+        jButtonExit.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         jButtonExit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonExitActionPerformed(evt);
             }
         });
-        getContentPane().add(jButtonExit, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 10, -1, -1));
+        getContentPane().add(jButtonExit, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 10, 70, 30));
 
         logo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         logo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/logo.png"))); // NOI18N
@@ -64,12 +65,12 @@ public class LoginFrame extends javax.swing.JFrame {
         logo.setPreferredSize(new java.awt.Dimension(367, 392));
         getContentPane().add(logo, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 20, 180, 200));
 
-        jLabel1.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 14)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Email:");
-        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 280, -1, -1));
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 280, -1, -1));
 
-        jTextFieldEmail.setBackground(new java.awt.Color(9, 25, 77));
+        jTextFieldEmail.setBackground(new java.awt.Color(14, 51, 83));
         jTextFieldEmail.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 13)); // NOI18N
         jTextFieldEmail.setForeground(new java.awt.Color(255, 255, 255));
         jTextFieldEmail.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -81,27 +82,29 @@ public class LoginFrame extends javax.swing.JFrame {
         });
         getContentPane().add(jTextFieldEmail, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 270, 250, 30));
 
-        jPasswordField.setBackground(new java.awt.Color(9, 25, 77));
+        jPasswordField.setBackground(new java.awt.Color(14, 51, 83));
         jPasswordField.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 13)); // NOI18N
         jPasswordField.setForeground(new java.awt.Color(255, 255, 255));
         jPasswordField.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         getContentPane().add(jPasswordField, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 320, 250, 30));
 
-        jLabel3.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 14)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel3.setText("Contraseña:");
-        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 330, -1, -1));
+        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 330, -1, -1));
 
         jButtonLogin.setBackground(new java.awt.Color(0, 68, 85));
         jButtonLogin.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         jButtonLogin.setForeground(new java.awt.Color(255, 255, 255));
         jButtonLogin.setText("Iniciar sesión");
+        jButtonLogin.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         jButtonLogin.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonLoginActionPerformed(evt);
             }
         });
-        getContentPane().add(jButtonLogin, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 380, -1, 30));
+        getContentPane().add(jButtonLogin, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 380, 110, 30));
 
         background.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/background.png"))); // NOI18N
         background.setMaximumSize(new java.awt.Dimension(4000, 2250));

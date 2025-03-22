@@ -29,73 +29,68 @@ public class FirebaseDataService {
             model.getColumn(i).setResizable(false);
         }
     }
-    
+
     public static void loadServices(JTable table, String statusCondition, JLabel loadingLabel, JScrollPane scrollPane) {
-    CollectionReference services = db.collection("services");
-    Query query = services.whereEqualTo("status", statusCondition)
-                          .orderBy("date", Query.Direction.ASCENDING);    
-    
-    SwingUtilities.invokeLater(() -> {
-       loadingLabel.setBounds(scrollPane.getX() + 640, scrollPane.getY() + 120, 100, 100);
-        scrollPane.getParent().add(loadingLabel); 
-        scrollPane.getParent().setComponentZOrder(loadingLabel, 0); 
-        loadingLabel.setVisible(true);
-        table.setVisible(false);  
-    });
-
-    query.addSnapshotListener((snapshots, error) -> {
-        if (error != null) {
-            System.err.println("❌ Error al escuchar cambios en Firestore: " + error.getMessage());
-            return;
-        }
-
-        DefaultTableModel model = new DefaultTableModel(COLUMN_NAMES, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Bloqueo de edición
-            }
-        };
-
-        if (snapshots != null && !snapshots.isEmpty()) {
-            for (QueryDocumentSnapshot document : snapshots) {
-                String serviceId = getReducedId(document.getId());
-                String serviceDate = getFormattedDate(document.getDate("date"));
-
-                DocumentReference operatorRef = (DocumentReference) document.get("refOperator");
-                String operator = (operatorRef != null) ? getFullName(operatorRef) : "Sin operario";
-
-                DocumentReference customerRef = (DocumentReference) document.get("refCustomer");
-                String customerName = (customerRef != null) ? getFullName(customerRef) : "Sin cliente";
-
-                String city = (customerRef != null) ? getCityFromCustomer(customerRef) : "Sin ciudad";
-
-                model.addRow(new Object[]{
-                    serviceId,
-                    serviceDate,
-                    operator,
-                    document.getString("type"),
-                    customerName,
-                    city
-                });
-            }
-        } else {
-            model.addRow(new Object[]{"", "No hay servicios", "", "", ""});
-        }
+        CollectionReference services = db.collection("services");
+        Query query = services.whereEqualTo("status", statusCondition)
+                .orderBy("date", Query.Direction.ASCENDING);
 
         SwingUtilities.invokeLater(() -> {
-            table.setModel(model); // Actualiza la tabla            
-            setColumnModel(table); 
-            loadingLabel.setVisible(false);
-            table.setVisible(true); 
+            loadingLabel.setBounds(scrollPane.getX() + 640, scrollPane.getY() + 120, 100, 100);
+            scrollPane.getParent().add(loadingLabel);
+            scrollPane.getParent().setComponentZOrder(loadingLabel, 0);
+            loadingLabel.setVisible(true);
+            table.setVisible(false);
         });
-    });
-}
 
+        query.addSnapshotListener((snapshots, error) -> {
+            if (error != null) {
+                System.err.println("❌ Error al escuchar cambios en Firestore: " + error.getMessage());
+                return;
+            }
 
-    private static String getReducedId(String id) {
-        return (id.length() > 6) ? id.substring(0, 6) + "..." : id;
+            DefaultTableModel model = new DefaultTableModel(COLUMN_NAMES, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false; // Bloqueo de edición
+                }
+            };
+
+            if (snapshots != null && !snapshots.isEmpty()) {
+                for (QueryDocumentSnapshot document : snapshots) {
+                    String serviceId = document.getId();
+                    String serviceDate = getFormattedDate(document.getDate("date"));
+
+                    DocumentReference operatorRef = (DocumentReference) document.get("refOperator");
+                    String operator = (operatorRef != null) ? getFullName(operatorRef) : "Sin operario";
+
+                    DocumentReference customerRef = (DocumentReference) document.get("refCustomer");
+                    String customerName = (customerRef != null) ? getFullName(customerRef) : "Sin cliente";
+
+                    String city = (customerRef != null) ? getCityFromCustomer(customerRef) : "Sin ciudad";
+
+                    model.addRow(new Object[]{
+                        serviceId,
+                        serviceDate,
+                        operator,
+                        document.getString("type"),
+                        customerName,
+                        city
+                    });
+                }
+            } else {
+                model.addRow(new Object[]{"", "No hay servicios", "", "", ""});
+            }
+
+            SwingUtilities.invokeLater(() -> {
+                table.setModel(model); // Actualiza la tabla            
+                setColumnModel(table);
+                loadingLabel.setVisible(false);
+                table.setVisible(true);
+            });
+        });
     }
-    
+
     private static String getFormattedDate(Date date) {
         SimpleDateFormat formatDate = new SimpleDateFormat("dd-MM-yyyy   /  HH:mm");
         return formatDate.format(date);

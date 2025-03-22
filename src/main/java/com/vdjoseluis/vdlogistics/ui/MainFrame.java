@@ -1,7 +1,15 @@
 package com.vdjoseluis.vdlogistics.ui;
 
+import com.vdjoseluis.vdlogistics.firebase.FirebaseDataCustomer;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseDataService;
+import com.vdjoseluis.vdlogistics.firebase.FirebaseDataUser;
+import java.awt.CardLayout;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Image;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 /**
@@ -9,19 +17,30 @@ import javax.swing.JScrollPane;
  * @author José Luis Vásquez Drouet
  */
 public class MainFrame extends javax.swing.JFrame {
+    
+    BackgroundPanel background = new BackgroundPanel();
 
-    /**
-     * Creates new form MainFrame
-     */
     public MainFrame() {
+        this.setContentPane(background);
+        
         initComponents();
+                
         loadingLabel.setVisible(true);
         this.setLocationRelativeTo(null);
-        
+        jMenuBar.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 5));        
         loadingLabel.setBounds(mainScrollPanel.getX() + 50, mainScrollPanel.getY() + 50, 100, 100);
 
         FirebaseDataService.loadServices(confirmedTable, "Confirmado", loadingLabel, mainScrollPanel);
         FirebaseDataService.loadServices(pendingTable, "Pendiente", loadingLabel, mainScrollPanel);
+        FirebaseDataService.loadServices(pendingCompletionTable, "Pendiente Finalización", loadingLabel, mainScrollPanel);
+        FirebaseDataService.loadServices(newDateTable, "Propuesta nueva fecha", loadingLabel, mainScrollPanel);
+        FirebaseDataUser.loadUsers(usersTable, loadingLabel, mainScrollPanel);
+        FirebaseDataCustomer.loadCustomers(customersTable, loadingLabel, mainScrollPanel);
+    }
+    
+    private void updateScroll() {
+        mainContent.revalidate();
+        mainContent.repaint();
     }
 
     /**
@@ -37,14 +56,29 @@ public class MainFrame extends javax.swing.JFrame {
         loadingLabel = new javax.swing.JLabel();
         mainScrollPanel = new javax.swing.JScrollPane();
         mainContent = new javax.swing.JPanel();
-        servicesPanel = new javax.swing.JPanel();
+        servicesPanel = new BackgroundPanel();
         jLabel1 = new javax.swing.JLabel();
         confirmedScrollPanel = new javax.swing.JScrollPane();
         confirmedTable = new javax.swing.JTable();
         jLabel2 = new javax.swing.JLabel();
         pendingScrollPanel = new javax.swing.JScrollPane();
         pendingTable = new javax.swing.JTable();
-        jMenuBar1 = new javax.swing.JMenuBar();
+        otherServicesPanel = new BackgroundPanel();
+        jLabel3 = new javax.swing.JLabel();
+        pendingCompletionScrollPanel = new javax.swing.JScrollPane();
+        pendingCompletionTable = new javax.swing.JTable();
+        jLabel4 = new javax.swing.JLabel();
+        newDateScrollPanel = new javax.swing.JScrollPane();
+        newDateTable = new javax.swing.JTable();
+        usersPanel = new BackgroundPanel();
+        usersScrollPanel = new javax.swing.JScrollPane();
+        usersTable = new javax.swing.JTable();
+        jLabel6 = new javax.swing.JLabel();
+        customersPanel = new BackgroundPanel();
+        customersScrollPanel = new javax.swing.JScrollPane();
+        customersTable = new javax.swing.JTable();
+        jLabel7 = new javax.swing.JLabel();
+        jMenuBar = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
@@ -52,6 +86,7 @@ public class MainFrame extends javax.swing.JFrame {
         jMenu2 = new javax.swing.JMenu();
         jMenuItem4 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
+        jMenuItem11 = new javax.swing.JMenuItem();
         jMenu3 = new javax.swing.JMenu();
         jMenuItem6 = new javax.swing.JMenuItem();
         jMenuItem7 = new javax.swing.JMenuItem();
@@ -81,11 +116,12 @@ public class MainFrame extends javax.swing.JFrame {
         });
         mainContent.setLayout(new java.awt.CardLayout());
 
-        servicesPanel.setBackground(java.awt.SystemColor.activeCaption);
+        servicesPanel.setBackground(new java.awt.Color(0, 153, 204));
         servicesPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
         servicesPanel.setLayout(new java.awt.GridBagLayout());
 
         jLabel1.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("Pendientes de Confirmar Cita");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -129,6 +165,7 @@ public class MainFrame extends javax.swing.JFrame {
         servicesPanel.add(confirmedScrollPanel, gridBagConstraints);
 
         jLabel2.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Servicios Confirmados");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -167,32 +204,246 @@ public class MainFrame extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(11, 133, 154, 133);
         servicesPanel.add(pendingScrollPanel, gridBagConstraints);
 
-        mainContent.add(servicesPanel, "card2");
+        mainContent.add(servicesPanel, "services");
+
+        otherServicesPanel.setBackground(new java.awt.Color(0, 153, 204));
+        otherServicesPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        otherServicesPanel.setLayout(new java.awt.GridBagLayout());
+
+        jLabel3.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel3.setText("Propuesta Nueva Cita");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(40, 509, 0, 0);
+        otherServicesPanel.add(jLabel3, gridBagConstraints);
+
+        pendingCompletionScrollPanel.setAutoscrolls(true);
+        pendingCompletionScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        pendingCompletionScrollPanel.setPreferredSize(new java.awt.Dimension(1100, 250));
+
+        pendingCompletionTable.setAutoCreateRowSorter(true);
+        pendingCompletionTable.setBackground(java.awt.SystemColor.control);
+        pendingCompletionTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pendingCompletionTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        pendingCompletionTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        pendingCompletionTable.setFillsViewportHeight(true);
+        pendingCompletionTable.setFocusable(false);
+        pendingCompletionTable.setPreferredSize(new java.awt.Dimension(1100, 224));
+        pendingCompletionTable.setRowHeight(40);
+        pendingCompletionTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        pendingCompletionTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        pendingCompletionTable.setShowGrid(false);
+        pendingCompletionTable.setShowVerticalLines(true);
+        pendingCompletionScrollPanel.setViewportView(pendingCompletionTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 224;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 0, 133);
+        otherServicesPanel.add(pendingCompletionScrollPanel, gridBagConstraints);
+
+        jLabel4.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel4.setText("Pendientes de Finalización");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(30, 549, 0, 0);
+        otherServicesPanel.add(jLabel4, gridBagConstraints);
+
+        newDateScrollPanel.setFont(new java.awt.Font("Lucida Console", 0, 12)); // NOI18N
+
+        newDateTable.setAutoCreateRowSorter(true);
+        newDateTable.setBackground(java.awt.SystemColor.control);
+        newDateTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        newDateTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        newDateTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        newDateTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        newDateTable.setFillsViewportHeight(true);
+        newDateTable.setFocusable(false);
+        newDateTable.setPreferredSize(new java.awt.Dimension(1100, 224));
+        newDateTable.setRowHeight(40);
+        newDateTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        newDateTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        newDateTable.setShowHorizontalLines(false);
+        newDateScrollPanel.setViewportView(newDateTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 224;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 154, 133);
+        otherServicesPanel.add(newDateScrollPanel, gridBagConstraints);
+
+        mainContent.add(otherServicesPanel, "otherServices");
+
+        usersPanel.setBackground(new java.awt.Color(0, 153, 204));
+        usersPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        usersPanel.setLayout(new java.awt.GridBagLayout());
+
+        usersScrollPanel.setAutoscrolls(true);
+        usersScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        usersScrollPanel.setPreferredSize(new java.awt.Dimension(1100, 250));
+
+        usersTable.setAutoCreateRowSorter(true);
+        usersTable.setBackground(java.awt.SystemColor.control);
+        usersTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        usersTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        usersTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        usersTable.setFillsViewportHeight(true);
+        usersTable.setFocusable(false);
+        usersTable.setPreferredSize(new java.awt.Dimension(1100, 224));
+        usersTable.setRowHeight(40);
+        usersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        usersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        usersTable.setShowGrid(false);
+        usersTable.setShowVerticalLines(true);
+        usersScrollPanel.setViewportView(usersTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 594;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 114, 133);
+        usersPanel.add(usersScrollPanel, gridBagConstraints);
+
+        jLabel6.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel6.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel6.setText("Usuarios - VD Logistics");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(30, 549, 0, 0);
+        usersPanel.add(jLabel6, gridBagConstraints);
+
+        mainContent.add(usersPanel, "users");
+
+        customersPanel.setBackground(new java.awt.Color(0, 153, 204));
+        customersPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        customersPanel.setLayout(new java.awt.GridBagLayout());
+
+        customersScrollPanel.setAutoscrolls(true);
+        customersScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        customersScrollPanel.setPreferredSize(new java.awt.Dimension(1100, 250));
+
+        customersTable.setAutoCreateRowSorter(true);
+        customersTable.setBackground(java.awt.SystemColor.control);
+        customersTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        customersTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        customersTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        customersTable.setFillsViewportHeight(true);
+        customersTable.setFocusable(false);
+        customersTable.setPreferredSize(new java.awt.Dimension(1100, 224));
+        customersTable.setRowHeight(40);
+        customersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        customersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        customersTable.setShowGrid(false);
+        customersTable.setShowVerticalLines(true);
+        customersScrollPanel.setViewportView(customersTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 594;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 114, 133);
+        customersPanel.add(customersScrollPanel, gridBagConstraints);
+
+        jLabel7.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel7.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel7.setText("Clientes - VD Logistics");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(30, 549, 0, 0);
+        customersPanel.add(jLabel7, gridBagConstraints);
+
+        mainContent.add(customersPanel, "customers");
 
         mainScrollPanel.setViewportView(mainContent);
 
-        jMenu1.setText("Operarios");
+        jMenu1.setText("Usuarios");
 
         jMenuItem1.setText("Añadir Nuevo");
         jMenu1.add(jMenuItem1);
 
-        jMenuItem2.setText("Listado de Operarios");
+        jMenuItem2.setText("Listado de Usuarios");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
         jMenu1.add(jMenuItem2);
 
         jMenuItem3.setText("Registro de Actividades");
         jMenu1.add(jMenuItem3);
 
-        jMenuBar1.add(jMenu1);
+        jMenuBar.add(jMenu1);
 
         jMenu2.setText("Servicios");
 
         jMenuItem4.setText("Crear Nuevo");
         jMenu2.add(jMenuItem4);
 
-        jMenuItem5.setText("Listado de Servicios");
+        jMenuItem5.setText("Confirmados / Por Confirmar Cita");
+        jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem5ActionPerformed(evt);
+            }
+        });
         jMenu2.add(jMenuItem5);
 
-        jMenuBar1.add(jMenu2);
+        jMenuItem11.setText("Pendientes Finalizar / Propuesta Nueva Cita");
+        jMenuItem11.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem11ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem11);
+
+        jMenuBar.add(jMenu2);
 
         jMenu3.setText("Incidencias");
 
@@ -202,7 +453,7 @@ public class MainFrame extends javax.swing.JFrame {
         jMenuItem7.setText("Listado de Incidencias");
         jMenu3.add(jMenuItem7);
 
-        jMenuBar1.add(jMenu3);
+        jMenuBar.add(jMenu3);
 
         jMenu4.setText("Clientes");
 
@@ -210,11 +461,20 @@ public class MainFrame extends javax.swing.JFrame {
         jMenu4.add(jMenuItem8);
 
         jMenuItem9.setText("Listado de Clientes");
+        jMenuItem9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem9ActionPerformed(evt);
+            }
+        });
         jMenu4.add(jMenuItem9);
 
-        jMenuBar1.add(jMenu4);
+        jMenuBar.add(jMenu4);
 
+        jMenu5.setBackground(new java.awt.Color(0, 68, 85));
+        jMenu5.setForeground(new java.awt.Color(255, 255, 255));
         jMenu5.setText("Usuario: J. Vásquez");
+        jMenu5.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
+        jMenu5.setOpaque(true);
 
         jMenuItem10.setText("Cerrar Sesión / Salir");
         jMenuItem10.addActionListener(new java.awt.event.ActionListener() {
@@ -224,9 +484,9 @@ public class MainFrame extends javax.swing.JFrame {
         });
         jMenu5.add(jMenuItem10);
 
-        jMenuBar1.add(jMenu5);
+        jMenuBar.add(jMenu5);
 
-        setJMenuBar(jMenuBar1);
+        setJMenuBar(jMenuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -236,7 +496,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 783, Short.MAX_VALUE)
+            .addComponent(mainScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 785, Short.MAX_VALUE)
         );
 
         pack();
@@ -261,6 +521,30 @@ public class MainFrame extends javax.swing.JFrame {
             mainScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         }
     }//GEN-LAST:event_formComponentResized
+
+    private void jMenuItem5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem5ActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "services");
+        updateScroll();
+    }//GEN-LAST:event_jMenuItem5ActionPerformed
+
+    private void jMenuItem11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem11ActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "otherServices");
+        updateScroll();
+    }//GEN-LAST:event_jMenuItem11ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "users");
+        updateScroll();
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void jMenuItem9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem9ActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "customers");
+        updateScroll();
+    }//GEN-LAST:event_jMenuItem9ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -301,16 +585,24 @@ public class MainFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane confirmedScrollPanel;
     private javax.swing.JTable confirmedTable;
+    private javax.swing.JPanel customersPanel;
+    private javax.swing.JScrollPane customersScrollPanel;
+    private javax.swing.JTable customersTable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
     private javax.swing.JMenu jMenu4;
     private javax.swing.JMenu jMenu5;
-    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuBar jMenuBar;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem10;
+    private javax.swing.JMenuItem jMenuItem11;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -322,8 +614,28 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel loadingLabel;
     private javax.swing.JPanel mainContent;
     private javax.swing.JScrollPane mainScrollPanel;
+    private javax.swing.JScrollPane newDateScrollPanel;
+    private javax.swing.JTable newDateTable;
+    private javax.swing.JPanel otherServicesPanel;
+    private javax.swing.JScrollPane pendingCompletionScrollPanel;
+    private javax.swing.JTable pendingCompletionTable;
     private javax.swing.JScrollPane pendingScrollPanel;
     private javax.swing.JTable pendingTable;
     private javax.swing.JPanel servicesPanel;
+    private javax.swing.JPanel usersPanel;
+    private javax.swing.JScrollPane usersScrollPanel;
+    private javax.swing.JTable usersTable;
     // End of variables declaration//GEN-END:variables
+    
+    class BackgroundPanel extends JPanel {
+        private Image image;
+        
+        @Override
+        public void paint(Graphics g) {
+            image = new ImageIcon(getClass().getResource("/images/fullBackground.png")).getImage();
+            g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+            setOpaque(false);
+            super.paint(g);
+        }
+    }
 }
