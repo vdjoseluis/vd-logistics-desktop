@@ -1,5 +1,6 @@
 package com.vdjoseluis.vdlogistics.firebase;
 
+import com.google.cloud.firestore.Firestore;
 import com.vdjoseluis.vdlogistics.ConfigLoader;
 import org.json.JSONObject;
 import java.io.OutputStream;
@@ -9,6 +10,7 @@ import java.util.Scanner;
 
 public class FirebaseAuthService {
     private static final String API_KEY = ConfigLoader.get("FIREBASE_API_KEY");  
+    private static final Firestore db = FirebaseConfig.getFirestore();
 
     public static boolean loginUser(String email, String password) {
         try {
@@ -49,4 +51,5 @@ public class FirebaseAuthService {
         }
         return false;
     }
+    
 }

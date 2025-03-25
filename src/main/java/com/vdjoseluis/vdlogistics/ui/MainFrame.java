@@ -1,14 +1,18 @@
 package com.vdjoseluis.vdlogistics.ui;
 
-import com.vdjoseluis.vdlogistics.firebase.FirebaseDataCustomer;
-import com.vdjoseluis.vdlogistics.firebase.FirebaseDataService;
-import com.vdjoseluis.vdlogistics.firebase.FirebaseDataUser;
+import com.vdjoseluis.vdlogistics.firebase.data.DataCustomer;
+import com.vdjoseluis.vdlogistics.firebase.data.DataLogs;
+import com.vdjoseluis.vdlogistics.firebase.data.DataService;
+import com.vdjoseluis.vdlogistics.firebase.data.DataUser;
+import com.vdjoseluis.vdlogistics.models.User;
 import java.awt.CardLayout;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -17,30 +21,91 @@ import javax.swing.JScrollPane;
  * @author José Luis Vásquez Drouet
  */
 public class MainFrame extends javax.swing.JFrame {
-    
+
     BackgroundPanel background = new BackgroundPanel();
 
-    public MainFrame() {
+    public MainFrame(String email) {
         this.setContentPane(background);
-        
+
         initComponents();
-                
+
+        User currentUser = DataUser.getCurrentUser(email);
+        if (currentUser != null) {
+            String userLabel = currentUser.getFirstName().charAt(0) + ". " + currentUser.getLastName();
+            currentUserMenu.setText("Usuario: " + userLabel);
+        }
+
         loadingLabel.setVisible(true);
         this.setLocationRelativeTo(null);
-        jMenuBar.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 5));        
+        jMenuBar.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 5));
         loadingLabel.setBounds(mainScrollPanel.getX() + 50, mainScrollPanel.getY() + 50, 100, 100);
 
-        FirebaseDataService.loadServices(confirmedTable, "Confirmado", loadingLabel, mainScrollPanel);
-        FirebaseDataService.loadServices(pendingTable, "Pendiente", loadingLabel, mainScrollPanel);
-        FirebaseDataService.loadServices(pendingCompletionTable, "Pendiente Finalización", loadingLabel, mainScrollPanel);
-        FirebaseDataService.loadServices(newDateTable, "Propuesta nueva fecha", loadingLabel, mainScrollPanel);
-        FirebaseDataUser.loadUsers(usersTable, loadingLabel, mainScrollPanel);
-        FirebaseDataCustomer.loadCustomers(customersTable, loadingLabel, mainScrollPanel);
+        DataService.loadServices(confirmedTable, "Confirmado", loadingLabel, mainScrollPanel);
+        DataService.loadServices(pendingTable, "Pendiente", loadingLabel, mainScrollPanel);
+        DataService.loadServices(pendingCompletionTable, "Pendiente Finalización", loadingLabel, mainScrollPanel);
+        DataService.loadServices(newDateTable, "Propuesta nueva fecha", loadingLabel, mainScrollPanel);
+        DataUser.loadUsers(usersTable, loadingLabel, mainScrollPanel);
+        DataCustomer.loadCustomers(customersTable, loadingLabel, mainScrollPanel);
+        DataLogs.loadLogs(logsTable, loadingLabel, logsScrollPanel);
     }
-    
+
     private void updateScroll() {
         mainContent.revalidate();
         mainContent.repaint();
+    }
+
+    private void enabledDashboardButtons() {
+        createUserButton.setEnabled(true);
+        updateUserButton.setEnabled(true);
+        deleteUserButton.setEnabled(true);
+    }
+
+    private void clearForm() {
+        txtUserId.setText("");
+        txtUserEmail.setText("");
+        txtUserEmail.setEnabled(true);
+        txtUserPassword.setText("");
+        txtUserPassword.setEnabled(true);
+        txtUserFirstName.setText("");
+        txtUserLastName.setText("");
+        txtUserPhone.setText("");
+        txtUserAddress.setText("");
+        comboUserType.setSelectedIndex(0);
+    }
+
+    private void createUser() {
+        String email = txtUserEmail.getText();
+        String password = new String(txtUserPassword.getPassword());
+        String firstName = txtUserFirstName.getText();
+        String lastName = txtUserLastName.getText();
+        String phone = txtUserPhone.getText();
+        String address = txtUserAddress.getText();
+        String type = (String) comboUserType.getSelectedItem();
+
+        if (email.isEmpty() || password.isEmpty() || firstName.isEmpty() || lastName.isEmpty() || phone.isEmpty() || address.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.");
+            return;
+        }
+
+        User newUser = new User(email, firstName, lastName, phone, type, address);
+        if (DataUser.createUser(newUser, password)) {
+            clearForm();
+            JOptionPane.showMessageDialog(this, "Usuario creado con éxito!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al crear usuario.");
+        }
+    }
+
+    private void showUserForm(Map<String, String> userData) {
+        txtUserId.setText(userData.get("id"));
+        txtUserEmail.setText(userData.get("email"));
+        txtUserEmail.setEnabled(false);
+        txtUserPassword.setEnabled(false);
+        txtUserFirstName.setText(userData.get("firstName"));
+        txtUserLastName.setText(userData.get("lastName"));
+        txtUserPhone.setText(userData.get("phone"));
+        txtUserAddress.setText(userData.get("address"));
+        comboUserType.setSelectedItem(userData.get("type"));
     }
 
     /**
@@ -78,23 +143,56 @@ public class MainFrame extends javax.swing.JFrame {
         customersScrollPanel = new javax.swing.JScrollPane();
         customersTable = new javax.swing.JTable();
         jLabel7 = new javax.swing.JLabel();
+        logsPanel = new BackgroundPanel();
+        logsScrollPanel = new javax.swing.JScrollPane();
+        logsTable = new javax.swing.JTable();
+        jLabel8 = new javax.swing.JLabel();
+        formUsersPanel = new BackgroundPanel();
+        jLabel9 = new javax.swing.JLabel();
+        dashboard = new javax.swing.JPanel();
+        jLabel5 = new javax.swing.JLabel();
+        createUserButton = new javax.swing.JButton();
+        updateUserButton = new javax.swing.JButton();
+        deleteUserButton = new javax.swing.JButton();
+        backButton = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel10 = new javax.swing.JLabel();
+        txtUserId = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        txtUserFirstName = new javax.swing.JTextField();
+        jLabel12 = new javax.swing.JLabel();
+        txtUserLastName = new javax.swing.JTextField();
+        jLabel13 = new javax.swing.JLabel();
+        txtUserPhone = new javax.swing.JTextField();
+        jLabel14 = new javax.swing.JLabel();
+        txtUserEmail = new javax.swing.JTextField();
+        jLabel17 = new javax.swing.JLabel();
+        txtUserPassword = new javax.swing.JPasswordField();
+        jLabel16 = new javax.swing.JLabel();
+        txtUserAddress = new javax.swing.JTextField();
+        jLabel15 = new javax.swing.JLabel();
+        comboUserType = new javax.swing.JComboBox<>();
+        saveDiscardPanel = new javax.swing.JPanel();
+        saveButton = new javax.swing.JButton();
+        cancelButton = new javax.swing.JButton();
         jMenuBar = new javax.swing.JMenuBar();
-        jMenu1 = new javax.swing.JMenu();
+        usersMenu = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem3 = new javax.swing.JMenuItem();
-        jMenu2 = new javax.swing.JMenu();
+        servicesMenu = new javax.swing.JMenu();
         jMenuItem4 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
         jMenuItem11 = new javax.swing.JMenuItem();
-        jMenu3 = new javax.swing.JMenu();
+        incidentsMenu = new javax.swing.JMenu();
         jMenuItem6 = new javax.swing.JMenuItem();
         jMenuItem7 = new javax.swing.JMenuItem();
-        jMenu4 = new javax.swing.JMenu();
+        customersMenu = new javax.swing.JMenu();
         jMenuItem8 = new javax.swing.JMenuItem();
         jMenuItem9 = new javax.swing.JMenuItem();
-        jMenu5 = new javax.swing.JMenu();
+        currentUserMenu = new javax.swing.JMenu();
         jMenuItem10 = new javax.swing.JMenuItem();
+        jMenuItem12 = new javax.swing.JMenuItem();
 
         loadingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         loadingLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/loaderSpinner.gif"))); // NOI18N
@@ -325,6 +423,11 @@ public class MainFrame extends javax.swing.JFrame {
         usersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         usersTable.setShowGrid(false);
         usersTable.setShowVerticalLines(true);
+        usersTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                usersTableMouseClicked(evt);
+            }
+        });
         usersScrollPanel.setViewportView(usersTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -402,12 +505,300 @@ public class MainFrame extends javax.swing.JFrame {
 
         mainContent.add(customersPanel, "customers");
 
+        logsPanel.setBackground(new java.awt.Color(0, 153, 204));
+        logsPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        logsPanel.setLayout(new java.awt.GridBagLayout());
+
+        logsScrollPanel.setAutoscrolls(true);
+        logsScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        logsScrollPanel.setPreferredSize(new java.awt.Dimension(1100, 250));
+
+        logsTable.setAutoCreateRowSorter(true);
+        logsTable.setBackground(java.awt.SystemColor.control);
+        logsTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        logsTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        logsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        logsTable.setFillsViewportHeight(true);
+        logsTable.setFocusable(false);
+        logsTable.setPreferredSize(new java.awt.Dimension(1100, 224));
+        logsTable.setRowHeight(40);
+        logsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        logsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        logsTable.setShowGrid(false);
+        logsTable.setShowVerticalLines(true);
+        logsScrollPanel.setViewportView(logsTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 594;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 114, 133);
+        logsPanel.add(logsScrollPanel, gridBagConstraints);
+
+        jLabel8.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel8.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel8.setText("Usuarios - VD Logistics");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(30, 549, 0, 0);
+        logsPanel.add(jLabel8, gridBagConstraints);
+
+        mainContent.add(logsPanel, "logs");
+
+        formUsersPanel.setBackground(new java.awt.Color(0, 153, 204));
+        formUsersPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        formUsersPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jLabel9.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel9.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel9.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel9.setText("Formulario de Usuarios - VD Logistics");
+        formUsersPanel.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 40, -1, -1));
+
+        dashboard.setBackground(new java.awt.Color(0, 153, 153));
+        dashboard.setAlignmentX(0.0F);
+        dashboard.setAlignmentY(0.0F);
+        dashboard.setPreferredSize(new java.awt.Dimension(240, 1100));
+
+        jLabel5.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 20)); // NOI18N
+        jLabel5.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel5.setText("Operaciones");
+
+        createUserButton.setBackground(new java.awt.Color(0, 68, 85));
+        createUserButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        createUserButton.setForeground(new java.awt.Color(255, 255, 255));
+        createUserButton.setText("Añadir Nuevo");
+        createUserButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        createUserButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createUserButtonActionPerformed(evt);
+            }
+        });
+
+        updateUserButton.setBackground(new java.awt.Color(0, 68, 85));
+        updateUserButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        updateUserButton.setForeground(new java.awt.Color(255, 255, 255));
+        updateUserButton.setText("Editar datos");
+        updateUserButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        updateUserButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateUserButtonActionPerformed(evt);
+            }
+        });
+
+        deleteUserButton.setBackground(new java.awt.Color(0, 68, 85));
+        deleteUserButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        deleteUserButton.setForeground(new java.awt.Color(255, 255, 255));
+        deleteUserButton.setText("Eliminar");
+        deleteUserButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        deleteUserButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteUserButtonActionPerformed(evt);
+            }
+        });
+
+        backButton.setBackground(new java.awt.Color(3, 121, 157));
+        backButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        backButton.setForeground(new java.awt.Color(255, 255, 255));
+        backButton.setText("Volver");
+        backButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        backButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                backButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout dashboardLayout = new javax.swing.GroupLayout(dashboard);
+        dashboard.setLayout(dashboardLayout);
+        dashboardLayout.setHorizontalGroup(
+            dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, dashboardLayout.createSequentialGroup()
+                .addContainerGap(74, Short.MAX_VALUE)
+                .addGroup(dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(createUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(updateUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(deleteUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(80, 80, 80))
+            .addComponent(jSeparator1)
+            .addGroup(dashboardLayout.createSequentialGroup()
+                .addGap(76, 76, 76)
+                .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        dashboardLayout.setVerticalGroup(
+            dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(dashboardLayout.createSequentialGroup()
+                .addGap(68, 68, 68)
+                .addComponent(jLabel5)
+                .addGap(60, 60, 60)
+                .addComponent(createUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(51, 51, 51)
+                .addComponent(updateUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(deleteUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(607, Short.MAX_VALUE))
+        );
+
+        formUsersPanel.add(dashboard, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
+
+        jLabel10.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel10.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel10.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel10.setText("ID:");
+        formUsersPanel.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 125, -1, -1));
+
+        txtUserId.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtUserId.setForeground(new java.awt.Color(0, 0, 0));
+        txtUserId.setDisabledTextColor(new java.awt.Color(153, 153, 153));
+        txtUserId.setEnabled(false);
+        formUsersPanel.add(txtUserId, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 120, 200, 30));
+
+        jLabel11.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel11.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel11.setText("Nombre:");
+        formUsersPanel.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 185, -1, -1));
+
+        txtUserFirstName.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtUserFirstName.setForeground(new java.awt.Color(0, 0, 0));
+        formUsersPanel.add(txtUserFirstName, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 180, 230, 30));
+
+        jLabel12.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel12.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel12.setText("Apellidos:");
+        formUsersPanel.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 245, -1, -1));
+
+        txtUserLastName.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtUserLastName.setForeground(new java.awt.Color(0, 0, 0));
+        formUsersPanel.add(txtUserLastName, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 240, 230, 30));
+
+        jLabel13.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel13.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel13.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel13.setText("Teléfono:");
+        formUsersPanel.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 305, -1, -1));
+
+        txtUserPhone.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtUserPhone.setForeground(new java.awt.Color(0, 0, 0));
+        formUsersPanel.add(txtUserPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 300, 120, 30));
+
+        jLabel14.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel14.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel14.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel14.setText("Email:");
+        formUsersPanel.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 365, -1, -1));
+
+        txtUserEmail.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtUserEmail.setForeground(new java.awt.Color(0, 0, 0));
+        formUsersPanel.add(txtUserEmail, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 360, 230, 30));
+
+        jLabel17.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel17.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel17.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel17.setText("Contraseña:");
+        formUsersPanel.add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 425, -1, -1));
+
+        txtUserPassword.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N
+        formUsersPanel.add(txtUserPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 420, 230, 30));
+
+        jLabel16.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel16.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel16.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel16.setText("Dirección:");
+        formUsersPanel.add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 485, -1, -1));
+
+        txtUserAddress.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtUserAddress.setForeground(new java.awt.Color(0, 0, 0));
+        formUsersPanel.add(txtUserAddress, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 480, 310, 30));
+
+        jLabel15.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel15.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel15.setText("Tipo / Función:");
+        formUsersPanel.add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 545, -1, -1));
+
+        comboUserType.setBackground(new java.awt.Color(255, 255, 255));
+        comboUserType.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        comboUserType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Adminstrativo", "Instalador", "Medidor", "Transportista" }));
+        formUsersPanel.add(comboUserType, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 540, 230, 30));
+
+        saveDiscardPanel.setBackground(new java.awt.Color(0, 153, 153));
+        saveDiscardPanel.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        saveButton.setBackground(new java.awt.Color(3, 121, 157));
+        saveButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        saveButton.setForeground(new java.awt.Color(255, 255, 255));
+        saveButton.setText("Guardar");
+        saveButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveButtonActionPerformed(evt);
+            }
+        });
+
+        cancelButton.setBackground(new java.awt.Color(0, 68, 85));
+        cancelButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        cancelButton.setForeground(new java.awt.Color(255, 255, 255));
+        cancelButton.setText("Cancelar");
+        cancelButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cancelButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout saveDiscardPanelLayout = new javax.swing.GroupLayout(saveDiscardPanel);
+        saveDiscardPanel.setLayout(saveDiscardPanelLayout);
+        saveDiscardPanelLayout.setHorizontalGroup(
+            saveDiscardPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(saveDiscardPanelLayout.createSequentialGroup()
+                .addGap(60, 60, 60)
+                .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 122, Short.MAX_VALUE)
+                .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(60, 60, 60))
+        );
+        saveDiscardPanelLayout.setVerticalGroup(
+            saveDiscardPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(saveDiscardPanelLayout.createSequentialGroup()
+                .addGap(38, 38, 38)
+                .addGroup(saveDiscardPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(32, Short.MAX_VALUE))
+        );
+
+        formUsersPanel.add(saveDiscardPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 610, 500, 110));
+
+        mainContent.add(formUsersPanel, "formUsers");
+
         mainScrollPanel.setViewportView(mainContent);
 
-        jMenu1.setText("Usuarios");
+        usersMenu.setText("Usuarios");
 
         jMenuItem1.setText("Añadir Nuevo");
-        jMenu1.add(jMenuItem1);
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        usersMenu.add(jMenuItem1);
 
         jMenuItem2.setText("Listado de Usuarios");
         jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
@@ -415,17 +806,22 @@ public class MainFrame extends javax.swing.JFrame {
                 jMenuItem2ActionPerformed(evt);
             }
         });
-        jMenu1.add(jMenuItem2);
+        usersMenu.add(jMenuItem2);
 
-        jMenuItem3.setText("Registro de Actividades");
-        jMenu1.add(jMenuItem3);
+        jMenuItem3.setText("Registro de Actividad");
+        jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem3ActionPerformed(evt);
+            }
+        });
+        usersMenu.add(jMenuItem3);
 
-        jMenuBar.add(jMenu1);
+        jMenuBar.add(usersMenu);
 
-        jMenu2.setText("Servicios");
+        servicesMenu.setText("Servicios");
 
         jMenuItem4.setText("Crear Nuevo");
-        jMenu2.add(jMenuItem4);
+        servicesMenu.add(jMenuItem4);
 
         jMenuItem5.setText("Confirmados / Por Confirmar Cita");
         jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
@@ -433,7 +829,7 @@ public class MainFrame extends javax.swing.JFrame {
                 jMenuItem5ActionPerformed(evt);
             }
         });
-        jMenu2.add(jMenuItem5);
+        servicesMenu.add(jMenuItem5);
 
         jMenuItem11.setText("Pendientes Finalizar / Propuesta Nueva Cita");
         jMenuItem11.addActionListener(new java.awt.event.ActionListener() {
@@ -441,24 +837,24 @@ public class MainFrame extends javax.swing.JFrame {
                 jMenuItem11ActionPerformed(evt);
             }
         });
-        jMenu2.add(jMenuItem11);
+        servicesMenu.add(jMenuItem11);
 
-        jMenuBar.add(jMenu2);
+        jMenuBar.add(servicesMenu);
 
-        jMenu3.setText("Incidencias");
+        incidentsMenu.setText("Incidencias");
 
         jMenuItem6.setText("Crear Nueva");
-        jMenu3.add(jMenuItem6);
+        incidentsMenu.add(jMenuItem6);
 
         jMenuItem7.setText("Listado de Incidencias");
-        jMenu3.add(jMenuItem7);
+        incidentsMenu.add(jMenuItem7);
 
-        jMenuBar.add(jMenu3);
+        jMenuBar.add(incidentsMenu);
 
-        jMenu4.setText("Clientes");
+        customersMenu.setText("Clientes");
 
         jMenuItem8.setText("Alta Nuevo Cliente");
-        jMenu4.add(jMenuItem8);
+        customersMenu.add(jMenuItem8);
 
         jMenuItem9.setText("Listado de Clientes");
         jMenuItem9.addActionListener(new java.awt.event.ActionListener() {
@@ -466,25 +862,33 @@ public class MainFrame extends javax.swing.JFrame {
                 jMenuItem9ActionPerformed(evt);
             }
         });
-        jMenu4.add(jMenuItem9);
+        customersMenu.add(jMenuItem9);
 
-        jMenuBar.add(jMenu4);
+        jMenuBar.add(customersMenu);
 
-        jMenu5.setBackground(new java.awt.Color(0, 68, 85));
-        jMenu5.setForeground(new java.awt.Color(255, 255, 255));
-        jMenu5.setText("Usuario: J. Vásquez");
-        jMenu5.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
-        jMenu5.setOpaque(true);
+        currentUserMenu.setBackground(new java.awt.Color(0, 68, 85));
+        currentUserMenu.setForeground(new java.awt.Color(255, 255, 255));
+        currentUserMenu.setText("Usuario: VD Logistics");
+        currentUserMenu.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
+        currentUserMenu.setOpaque(true);
 
-        jMenuItem10.setText("Cerrar Sesión / Salir");
+        jMenuItem10.setText("Cerrar Sesión");
         jMenuItem10.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItem10ActionPerformed(evt);
             }
         });
-        jMenu5.add(jMenuItem10);
+        currentUserMenu.add(jMenuItem10);
 
-        jMenuBar.add(jMenu5);
+        jMenuItem12.setText("Salir");
+        jMenuItem12.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem12ActionPerformed(evt);
+            }
+        });
+        currentUserMenu.add(jMenuItem12);
+
+        jMenuBar.add(currentUserMenu);
 
         setJMenuBar(jMenuBar);
 
@@ -503,7 +907,8 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jMenuItem10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem10ActionPerformed
-        System.exit(0);
+        this.dispose();
+        new LoginFrame().setVisible(true);
     }//GEN-LAST:event_jMenuItem10ActionPerformed
 
     private void mainContentComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_mainContentComponentResized
@@ -546,63 +951,197 @@ public class MainFrame extends javax.swing.JFrame {
         updateScroll();
     }//GEN-LAST:event_jMenuItem9ActionPerformed
 
+    private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "logs");
+        updateScroll();
+    }//GEN-LAST:event_jMenuItem3ActionPerformed
+
+    private void createUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createUserButtonActionPerformed
+        clearForm();
+        enabledDashboardButtons();
+        createUserButton.setEnabled(false);
+        txtUserFirstName.requestFocus();
+    }//GEN-LAST:event_createUserButtonActionPerformed
+
+    private void updateUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateUserButtonActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "users");
+        updateScroll();
+        clearForm();
+        enabledDashboardButtons();
+    }//GEN-LAST:event_updateUserButtonActionPerformed
+
+    private void deleteUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteUserButtonActionPerformed
+        if (!txtUserId.getText().isEmpty()) {
+            int confirm = JOptionPane.showConfirmDialog(this, "¿ Estás seguro de eliminar este usuario ?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+            String userId = txtUserId.getText().trim();
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean success = DataUser.deleteUser(userId, this);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Usuario eliminado correctamente");
+                    CardLayout cl = (CardLayout) mainContent.getLayout();
+                    cl.show(mainContent, "users");
+                    updateScroll();
+                    clearForm();
+                    enabledDashboardButtons();
+                }
+            }
+        } else {
+            CardLayout cl = (CardLayout) mainContent.getLayout();
+            cl.show(mainContent, "users");
+            updateScroll();
+            clearForm();
+            enabledDashboardButtons();
+        }
+    }//GEN-LAST:event_deleteUserButtonActionPerformed
+
+    private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "users");
+        updateScroll();
+        clearForm();
+        enabledDashboardButtons();
+    }//GEN-LAST:event_backButtonActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "formUsers");
+        updateScroll();
+        clearForm();
+        createUserButton.setEnabled(false);
+        txtUserFirstName.requestFocus();
+        System.out.println(txtUserId.getText());
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+        if (txtUserId.getText().isEmpty()) {
+            createUser();
+        } else {
+            String userId = txtUserId.getText();
+            String firstName = txtUserFirstName.getText();
+            String lastName = txtUserLastName.getText();
+            String phone = txtUserPhone.getText();
+            String address = txtUserAddress.getText();
+            String type = comboUserType.getSelectedItem().toString();
+
+            boolean success = DataUser.updateUser(userId, firstName, lastName, phone, address, type);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Usuario actualizado correctamente");
+                CardLayout cl = (CardLayout) mainContent.getLayout();
+                cl.show(mainContent, "users");
+                updateScroll();
+                clearForm();
+                enabledDashboardButtons();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al actualizar usuario");
+            }
+        }
+    }//GEN-LAST:event_saveButtonActionPerformed
+
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, "users");
+        updateScroll();
+        clearForm();
+        enabledDashboardButtons();
+    }//GEN-LAST:event_cancelButtonActionPerformed
+
+    private void usersTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_usersTableMouseClicked
+        int selectedRow = usersTable.getSelectedRow();
+        if (selectedRow != -1) {
+            String userId = usersTable.getValueAt(selectedRow, 0).toString();
+            Map<String, String> userData = DataUser.getDataUser(userId);
+            if (!userData.isEmpty()) {
+                CardLayout cl = (CardLayout) mainContent.getLayout();
+                cl.show(mainContent, "formUsers");
+                updateScroll();
+                updateUserButton.setEnabled(false);
+                txtUserFirstName.requestFocus();
+                showUserForm(userData);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario");
+            }
+        }
+    }//GEN-LAST:event_usersTableMouseClicked
+
+    private void jMenuItem12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem12ActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_jMenuItem12ActionPerformed
+
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new MainFrame().setVisible(true);
-            }
-        });
-    }
-
+//    public static void main(String args[]) {
+//        /* Set the Nimbus look and feel */
+//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+//         */
+//        try {
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+//                if ("Nimbus".equals(info.getName())) {
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+//        } catch (ClassNotFoundException ex) {
+//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (InstantiationException ex) {
+//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (IllegalAccessException ex) {
+//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        }
+//        //</editor-fold>
+//
+//        /* Create and display the form */
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                new MainFrame().setVisible(true);
+//            }
+//        });
+//    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton backButton;
+    private javax.swing.JButton cancelButton;
+    private javax.swing.JComboBox<String> comboUserType;
     private javax.swing.JScrollPane confirmedScrollPanel;
     private javax.swing.JTable confirmedTable;
+    private javax.swing.JButton createUserButton;
+    private javax.swing.JMenu currentUserMenu;
+    private javax.swing.JMenu customersMenu;
     private javax.swing.JPanel customersPanel;
     private javax.swing.JScrollPane customersScrollPanel;
     private javax.swing.JTable customersTable;
+    private javax.swing.JPanel dashboard;
+    private javax.swing.JButton deleteUserButton;
+    private javax.swing.JPanel formUsersPanel;
+    private javax.swing.JMenu incidentsMenu;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
-    private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenu jMenu2;
-    private javax.swing.JMenu jMenu3;
-    private javax.swing.JMenu jMenu4;
-    private javax.swing.JMenu jMenu5;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JMenuBar jMenuBar;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem10;
     private javax.swing.JMenuItem jMenuItem11;
+    private javax.swing.JMenuItem jMenuItem12;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -611,7 +1150,11 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem7;
     private javax.swing.JMenuItem jMenuItem8;
     private javax.swing.JMenuItem jMenuItem9;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel loadingLabel;
+    private javax.swing.JPanel logsPanel;
+    private javax.swing.JScrollPane logsScrollPanel;
+    private javax.swing.JTable logsTable;
     private javax.swing.JPanel mainContent;
     private javax.swing.JScrollPane mainScrollPanel;
     private javax.swing.JScrollPane newDateScrollPanel;
@@ -621,15 +1164,28 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTable pendingCompletionTable;
     private javax.swing.JScrollPane pendingScrollPanel;
     private javax.swing.JTable pendingTable;
+    private javax.swing.JButton saveButton;
+    private javax.swing.JPanel saveDiscardPanel;
+    private javax.swing.JMenu servicesMenu;
     private javax.swing.JPanel servicesPanel;
+    private javax.swing.JTextField txtUserAddress;
+    private javax.swing.JTextField txtUserEmail;
+    private javax.swing.JTextField txtUserFirstName;
+    private javax.swing.JTextField txtUserId;
+    private javax.swing.JTextField txtUserLastName;
+    private javax.swing.JPasswordField txtUserPassword;
+    private javax.swing.JTextField txtUserPhone;
+    private javax.swing.JButton updateUserButton;
+    private javax.swing.JMenu usersMenu;
     private javax.swing.JPanel usersPanel;
     private javax.swing.JScrollPane usersScrollPanel;
     private javax.swing.JTable usersTable;
     // End of variables declaration//GEN-END:variables
-    
+
     class BackgroundPanel extends JPanel {
+
         private Image image;
-        
+
         @Override
         public void paint(Graphics g) {
             image = new ImageIcon(getClass().getResource("/images/fullBackground.png")).getImage();

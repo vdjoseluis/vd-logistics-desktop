@@ -52,5 +52,11 @@
             <version>20230227</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
+
     </dependencies>
 </project>

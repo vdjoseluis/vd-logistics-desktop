@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package com.vdjoseluis.vdlogistics.ui;
 
 import com.vdjoseluis.vdlogistics.firebase.FirebaseAuthService;
@@ -10,7 +6,7 @@ import javax.swing.SwingUtilities;
 
 /**
  *
- * @author vdjos
+ * @author José Luis Vásquez Drouet
  */
 public class LoginFrame extends javax.swing.JFrame {
 
@@ -130,15 +126,15 @@ public class LoginFrame extends javax.swing.JFrame {
         String email = this.jTextFieldEmail.getText();
         String password = new String (this.jPasswordField.getPassword());
        if (FirebaseAuthService.loginUser(email, password)) {
-            //JOptionPane.showMessageDialog(this, "Login exitoso!");
             dispose();
-            MainFrame home = new MainFrame();
+            MainFrame home = new MainFrame(email);
                 home.setVisible(true);
                 this.dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Error de autenticación");
         }     
-    }
+    }    
+    
     /**
      * @param args the command line arguments
      */

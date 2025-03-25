@@ -1,6 +1,7 @@
-package com.vdjoseluis.vdlogistics.firebase;
+package com.vdjoseluis.vdlogistics.firebase.data;
 
 import com.google.cloud.firestore.*;
+import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
@@ -11,29 +12,27 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
-public class FirebaseDataService {
+public class DataLogs {
 
     private static final Firestore db = FirebaseConfig.getFirestore();
 
-    private static final String[] COLUMN_NAMES = {"ID", "Fecha", "Operario", "Tipo de Servicio", "Cliente", "Población"};
+    private static final String[] COLUMN_NAMES = {"ID", "Fecha", "Operario", "Acción Realizada", "Servicio"};
 
     private static void setColumnModel(JTable table) {
         TableColumnModel model = table.getColumnModel();
-        model.getColumn(0).setPreferredWidth(80);
+        model.getColumn(0).setPreferredWidth(100);
         model.getColumn(1).setPreferredWidth(150);
-        model.getColumn(2).setPreferredWidth(250);
+        model.getColumn(2).setPreferredWidth(240);
         model.getColumn(3).setPreferredWidth(130);
-        model.getColumn(4).setPreferredWidth(250);
-        model.getColumn(5).setPreferredWidth(240);
+        model.getColumn(4).setPreferredWidth(100);
         for (int i = 0; i < model.getColumnCount(); i++) {
             model.getColumn(i).setResizable(false);
         }
     }
 
-    public static void loadServices(JTable table, String statusCondition, JLabel loadingLabel, JScrollPane scrollPane) {
-        CollectionReference services = db.collection("services");
-        Query query = services.whereEqualTo("status", statusCondition)
-                .orderBy("date", Query.Direction.ASCENDING);
+    public static void loadLogs(JTable table, JLabel loadingLabel, JScrollPane scrollPane) {
+        CollectionReference logs = db.collection("logs");
+        Query query = logs.orderBy("date", Query.Direction.ASCENDING);
 
         SwingUtilities.invokeLater(() -> {
             loadingLabel.setBounds(scrollPane.getX() + 640, scrollPane.getY() + 120, 100, 100);
@@ -52,38 +51,37 @@ public class FirebaseDataService {
             DefaultTableModel model = new DefaultTableModel(COLUMN_NAMES, 0) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
-                    return false; // Bloqueo de edición
+                    return false; 
                 }
             };
 
             if (snapshots != null && !snapshots.isEmpty()) {
                 for (QueryDocumentSnapshot document : snapshots) {
-                    String serviceId = document.getId();
-                    String serviceDate = getFormattedDate(document.getDate("date"));
+                    String logId = document.getId();
+                    String date = getFormattedDate(document.getDate("date"));
 
                     DocumentReference operatorRef = (DocumentReference) document.get("refOperator");
                     String operator = (operatorRef != null) ? getFullName(operatorRef) : "Sin operario";
+                    
+                    String action = document.getString("action");
 
-                    DocumentReference customerRef = (DocumentReference) document.get("refCustomer");
-                    String customerName = (customerRef != null) ? getFullName(customerRef) : "Sin cliente";
-
-                    String city = (customerRef != null) ? getCityFromCustomer(customerRef) : "Sin ciudad";
+                    DocumentReference serviceRef = (DocumentReference) document.get("refService");
+                    String service = (serviceRef != null) ? serviceRef.getId() : "Sin servicio";
 
                     model.addRow(new Object[]{
-                        serviceId,
-                        serviceDate,
+                        logId,
+                        date,
                         operator,
-                        document.getString("type"),
-                        customerName,
-                        city
+                        action,
+                        service
                     });
                 }
             } else {
-                model.addRow(new Object[]{"", "No hay servicios", "", "", ""});
+                model.addRow(new Object[]{"", "No hay actividad", "", ""});
             }
 
             SwingUtilities.invokeLater(() -> {
-                table.setModel(model); // Actualiza la tabla            
+                table.setModel(model); 
                 setColumnModel(table);
                 loadingLabel.setVisible(false);
                 table.setVisible(true);
@@ -108,17 +106,4 @@ public class FirebaseDataService {
         }
     }
 
-    private static String getCityFromCustomer(DocumentReference ref) {
-        try {
-            DocumentSnapshot doc = ref.get().get();
-            String address = doc.getString("address");
-            if (address != null && address.contains(",")) {
-                String[] parts = address.split(",");
-                return parts[parts.length - 1].trim();  // Última parte después de la última coma
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return "Sin ciudad";
-    }
 }
