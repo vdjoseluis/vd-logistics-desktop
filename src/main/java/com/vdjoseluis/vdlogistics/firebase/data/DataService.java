@@ -1,12 +1,19 @@
 package com.vdjoseluis.vdlogistics.firebase.data;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
+import com.toedter.calendar.JDateChooser;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
+import com.vdjoseluis.vdlogistics.models.Service;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -121,5 +128,102 @@ public class DataService {
             e.printStackTrace();
         }
         return "Sin ciudad";
+    }
+
+    public static Service getServiceById(String serviceId) {
+        try {
+            DocumentSnapshot doc = db.collection("services").document(serviceId).get().get();
+
+            if (doc.exists()) {
+                String id = doc.getId();
+                Date date = doc.getTimestamp("date").toDate();
+                String type = doc.getString("type");
+
+                DocumentReference operatorRef = (DocumentReference) doc.get("refOperator");
+                String operator = (operatorRef != null) ? getFullName(operatorRef) : "Sin operario";
+
+                DocumentReference customerRef = (DocumentReference) doc.get("refCustomer");
+                String customer = (customerRef != null) ? getFullName(customerRef) : "Sin cliente";
+
+                String status = doc.getString("status");
+                String description = doc.getString("description");
+                String comments = (doc.contains("comments")) ? doc.getString("comments") : "No hay comentarios.";
+
+                return new Service(id, date, operator, type, customer, status, description, comments);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error al obtener servicio: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public static boolean createService(Service service, JDateChooser date, JSpinner hour, JSpinner minutes) {
+        try {
+            DocumentReference docRef = db.collection("services").document();
+            
+            String operatorId = DataUser.operatorMap.get(service.getOperator());
+            String customerId = DataCustomer.customerMap.get(service.getCustomer());
+                        
+            Map<String, Object> data = new HashMap<>();
+            data.put("date", getTimestamp(date, hour, minutes));
+            data.put("description", service.getDescription());
+            data.put("refOperator", db.collection("users").document(operatorId));
+            data.put("type", service.getType());
+            data.put("status", service.getStatus());
+            data.put("refCustomer", db.collection("customers").document(customerId));
+            data.put("comments", service.getComments());
+
+            docRef.set(data);
+
+            System.out.println("✅ Servicio creado correctamente ");
+            return true;
+        } catch (Exception e) {
+            System.err.println("❌ Error creando servicio: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    private static Timestamp getTimestamp(JDateChooser jDateChooser, JSpinner hourSelector, JSpinner minuteSelector) {
+        try {
+            Date selectedDate = jDateChooser.getDate();
+            int hour = (Integer) hourSelector.getValue();
+            int minutes = (Integer) minuteSelector.getValue();
+            
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(selectedDate);
+            calendar.set(Calendar.HOUR_OF_DAY, hour);
+            calendar.set(Calendar.MINUTE, minutes);
+            calendar.set(Calendar.SECOND, 0);
+            
+            return Timestamp.of(calendar.getTime());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    public static boolean updateService(Service service, JDateChooser date, JSpinner hour, JSpinner minutes) {
+        try {
+            DocumentReference docRef = db.collection("services").document(service.getId());
+            
+            String operatorId = DataUser.operatorMap.get(service.getOperator());
+            String customerId = DataCustomer.customerMap.get(service.getCustomer());
+                        
+            Map<String, Object> data = new HashMap<>();
+            data.put("date", getTimestamp(date, hour, minutes));
+            data.put("description", service.getDescription());
+            data.put("refOperator", db.collection("users").document(operatorId));
+            data.put("type", service.getType());
+            data.put("status", service.getStatus());
+            data.put("refCustomer", db.collection("customers").document(customerId));
+            data.put("comments", service.getComments());
+
+            docRef.update(data).get();
+
+            System.out.println("✅ Servicio actualizado correctamente ");
+            return true;
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error creando servicio: " + e.getMessage());
+            return false;
+        }
     }
 }

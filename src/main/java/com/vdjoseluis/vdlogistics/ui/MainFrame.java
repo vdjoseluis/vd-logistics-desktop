@@ -1,20 +1,30 @@
 package com.vdjoseluis.vdlogistics.ui;
 
 import com.vdjoseluis.vdlogistics.firebase.data.DataCustomer;
+import com.vdjoseluis.vdlogistics.firebase.data.DataIncident;
 import com.vdjoseluis.vdlogistics.firebase.data.DataLogs;
 import com.vdjoseluis.vdlogistics.firebase.data.DataService;
 import com.vdjoseluis.vdlogistics.firebase.data.DataUser;
+import com.vdjoseluis.vdlogistics.models.Service;
 import com.vdjoseluis.vdlogistics.models.User;
 import java.awt.CardLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 import javax.swing.ImageIcon;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 
 /**
  *
@@ -39,6 +49,7 @@ public class MainFrame extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         jMenuBar.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 5));
         loadingLabel.setBounds(mainScrollPanel.getX() + 50, mainScrollPanel.getY() + 50, 100, 100);
+        fillComboBoxes();
 
         DataService.loadServices(confirmedTable, "Confirmado", loadingLabel, mainScrollPanel);
         DataService.loadServices(pendingTable, "Pendiente", loadingLabel, mainScrollPanel);
@@ -46,31 +57,57 @@ public class MainFrame extends javax.swing.JFrame {
         DataService.loadServices(newDateTable, "Propuesta nueva fecha", loadingLabel, mainScrollPanel);
         DataUser.loadUsers(usersTable, loadingLabel, mainScrollPanel);
         DataCustomer.loadCustomers(customersTable, loadingLabel, mainScrollPanel);
-        DataLogs.loadLogs(logsTable, loadingLabel, logsScrollPanel);
+        DataLogs.loadLogs(logsTable, loadingLabel, mainScrollPanel);
+        DataIncident.loadIncidents(pendingIncidentsTable, "Pendiente", loadingLabel, mainScrollPanel);
+        DataIncident.loadIncidents(processedIncidentsTable, "Tramitada", loadingLabel, mainScrollPanel);
     }
 
     private void updateScroll() {
         mainContent.revalidate();
         mainContent.repaint();
     }
+    
+    private void navigateCard(String cardName) {
+        CardLayout cl = (CardLayout) mainContent.getLayout();
+        cl.show(mainContent, cardName);
+        updateScroll();
+    }
+
+    private void fillComboBoxes() {
+        DataUser.listenForOperatorNames(cmbServiceOperator);
+        DataCustomer.listenForCustomerNames(cmbServiceCustomer);
+    }
 
     private void enabledDashboardButtons() {
         createUserButton.setEnabled(true);
         updateUserButton.setEnabled(true);
         deleteUserButton.setEnabled(true);
+        createServiceButton.setEnabled(true);
+        updateServiceButton.setEnabled(true);
+        deleteServiceButton.setEnabled(true);
     }
 
-    private void clearForm() {
-        txtUserId.setText("");
-        txtUserEmail.setText("");
+    private void clearForm(JPanel panel) {
+        for (Component component : panel.getComponents()) {
+            if (component instanceof JTextField) {
+                ((JTextField) component).setText("");
+            } else if (component instanceof JComboBox) {
+                ((JComboBox<?>) component).setSelectedIndex(0);
+            } else if (component instanceof JPasswordField) {
+                ((JPasswordField) component).setText("");
+            }
+        }
         txtUserEmail.setEnabled(true);
-        txtUserPassword.setText("");
         txtUserPassword.setEnabled(true);
-        txtUserFirstName.setText("");
-        txtUserLastName.setText("");
-        txtUserPhone.setText("");
-        txtUserAddress.setText("");
-        comboUserType.setSelectedIndex(0);
+
+        txtServiceDescription.setText("");
+        txtServiceComments.setText("");
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        dcServiceDate.setDate(calendar.getTime());
+        spServiceHour.setValue(8);
+        spServiceMinute.setValue(0);
     }
 
     private void createUser() {
@@ -89,7 +126,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         User newUser = new User(email, firstName, lastName, phone, type, address);
         if (DataUser.createUser(newUser, password)) {
-            clearForm();
+            clearForm(formUsersPanel);
             JOptionPane.showMessageDialog(this, "Usuario creado con éxito!");
         } else {
             JOptionPane.showMessageDialog(this, "Error al crear usuario.");
@@ -106,6 +143,57 @@ public class MainFrame extends javax.swing.JFrame {
         txtUserPhone.setText(userData.get("phone"));
         txtUserAddress.setText(userData.get("address"));
         comboUserType.setSelectedItem(userData.get("type"));
+    }
+
+    private void showServiceForm(Service serviceData) {
+        txtServiceId.setText(serviceData.getId());
+        Date serviceDate = serviceData.getDate();
+        if (serviceDate != null) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(serviceDate);
+            dcServiceDate.setDate(serviceDate);
+            spServiceHour.setValue(calendar.get(Calendar.HOUR_OF_DAY));
+            spServiceMinute.setValue(calendar.get(Calendar.MINUTE));
+        }
+
+        txtServiceDescription.setText(serviceData.getDescription());
+        cmbServiceOperator.setSelectedItem(serviceData.getOperator());
+        cmbServiceType.setSelectedItem(serviceData.getType());
+        cmbServiceCustomer.setSelectedItem(serviceData.getCustomer());
+        cmbServiceStatus.setSelectedItem(serviceData.getStatus());
+        txtServiceComments.setText(serviceData.getComments());
+    }
+
+    private void saveService(String action) {
+        String id = ("update".equals(action)) ? txtServiceId.getText() : null;
+        Date date = dcServiceDate.getDate();
+        String description = txtServiceDescription.getText();
+        String operatorName = (String) cmbServiceOperator.getSelectedItem();
+        String type = (String) cmbServiceType.getSelectedItem();
+        String customerName = (String) cmbServiceCustomer.getSelectedItem();
+        String status = ("update".equals(action)) ? (String) cmbServiceStatus.getSelectedItem() : "Pendiente";
+        String comments = txtServiceComments.getText();
+
+        if (description.isEmpty() || date == null) {
+            JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.");
+            return;
+        }
+
+        Service newService = new Service(id, date, operatorName, type, customerName, status, description, comments);
+        boolean success = false;
+        if ("new".equals(action)) {
+            success = DataService.createService(newService, dcServiceDate, spServiceHour, spServiceMinute);
+        } else if ("update".equals(action)){
+            success = DataService.updateService(newService, dcServiceDate, spServiceHour, spServiceMinute);
+        }
+        
+        if (success) {
+            clearForm(formServicesPanel);
+            JOptionPane.showMessageDialog(this, "Registrado correctamente!");
+            navigateCard("services");
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al registrar servicio.");
+        }
     }
 
     /**
@@ -147,14 +235,21 @@ public class MainFrame extends javax.swing.JFrame {
         logsScrollPanel = new javax.swing.JScrollPane();
         logsTable = new javax.swing.JTable();
         jLabel8 = new javax.swing.JLabel();
+        incidentsPanel = new BackgroundPanel();
+        jLabel18 = new javax.swing.JLabel();
+        pendingIncidentsScrollPanel = new javax.swing.JScrollPane();
+        pendingIncidentsTable = new javax.swing.JTable();
+        jLabel19 = new javax.swing.JLabel();
+        processedIncidentsScrollPanel = new javax.swing.JScrollPane();
+        processedIncidentsTable = new javax.swing.JTable();
         formUsersPanel = new BackgroundPanel();
         jLabel9 = new javax.swing.JLabel();
-        dashboard = new javax.swing.JPanel();
+        opUsers = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         createUserButton = new javax.swing.JButton();
         updateUserButton = new javax.swing.JButton();
         deleteUserButton = new javax.swing.JButton();
-        backButton = new javax.swing.JButton();
+        backUsers = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel10 = new javax.swing.JLabel();
         txtUserId = new javax.swing.JTextField();
@@ -173,8 +268,42 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel15 = new javax.swing.JLabel();
         comboUserType = new javax.swing.JComboBox<>();
         saveDiscardPanel = new javax.swing.JPanel();
-        saveButton = new javax.swing.JButton();
-        cancelButton = new javax.swing.JButton();
+        saveUser = new javax.swing.JButton();
+        discardUser = new javax.swing.JButton();
+        formServicesPanel = new BackgroundPanel();
+        jLabel20 = new javax.swing.JLabel();
+        opServices = new javax.swing.JPanel();
+        jLabel21 = new javax.swing.JLabel();
+        jLabel22 = new javax.swing.JLabel();
+        txtServiceId = new javax.swing.JTextField();
+        createServiceButton = new javax.swing.JButton();
+        updateServiceButton = new javax.swing.JButton();
+        deleteServiceButton = new javax.swing.JButton();
+        backServices = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JSeparator();
+        jLabel23 = new javax.swing.JLabel();
+        dcServiceDate = new com.toedter.calendar.JDateChooser();
+        jLabel31 = new javax.swing.JLabel();
+        spServiceHour = new javax.swing.JSpinner();
+        jLabel30 = new javax.swing.JLabel();
+        spServiceMinute = new javax.swing.JSpinner();
+        jLabel27 = new javax.swing.JLabel();
+        serviceDescriptionJSPanel = new javax.swing.JScrollPane();
+        txtServiceDescription = new javax.swing.JTextArea();
+        jLabel24 = new javax.swing.JLabel();
+        cmbServiceOperator = new javax.swing.JComboBox<>();
+        jLabel25 = new javax.swing.JLabel();
+        cmbServiceType = new javax.swing.JComboBox<>();
+        jLabel28 = new javax.swing.JLabel();
+        cmbServiceCustomer = new javax.swing.JComboBox<>();
+        jLabel26 = new javax.swing.JLabel();
+        cmbServiceStatus = new javax.swing.JComboBox<>();
+        jLabel29 = new javax.swing.JLabel();
+        serviceCommentsJSPanel = new javax.swing.JScrollPane();
+        txtServiceComments = new javax.swing.JTextArea();
+        saveDiscardPanel1 = new javax.swing.JPanel();
+        saveService = new javax.swing.JButton();
+        discardService = new javax.swing.JButton();
         jMenuBar = new javax.swing.JMenuBar();
         usersMenu = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -245,8 +374,13 @@ public class MainFrame extends javax.swing.JFrame {
         confirmedTable.setRowHeight(40);
         confirmedTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         confirmedTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        confirmedTable.setShowGrid(false);
+        confirmedTable.setShowGrid(true);
         confirmedTable.setShowVerticalLines(true);
+        confirmedTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                confirmedTableMouseClicked(evt);
+            }
+        });
         confirmedScrollPanel.setViewportView(confirmedTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -273,7 +407,8 @@ public class MainFrame extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(30, 549, 0, 0);
         servicesPanel.add(jLabel2, gridBagConstraints);
 
-        pendingScrollPanel.setFont(new java.awt.Font("Lucida Console", 0, 12)); // NOI18N
+        pendingScrollPanel.setAutoscrolls(true);
+        pendingScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
 
         pendingTable.setAutoCreateRowSorter(true);
         pendingTable.setBackground(java.awt.SystemColor.control);
@@ -286,7 +421,12 @@ public class MainFrame extends javax.swing.JFrame {
         pendingTable.setRowHeight(40);
         pendingTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         pendingTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        pendingTable.setShowHorizontalLines(false);
+        pendingTable.setShowGrid(true);
+        pendingTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                pendingTableMouseClicked(evt);
+            }
+        });
         pendingScrollPanel.setViewportView(pendingTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -335,8 +475,13 @@ public class MainFrame extends javax.swing.JFrame {
         pendingCompletionTable.setRowHeight(40);
         pendingCompletionTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         pendingCompletionTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        pendingCompletionTable.setShowGrid(false);
+        pendingCompletionTable.setShowGrid(true);
         pendingCompletionTable.setShowVerticalLines(true);
+        pendingCompletionTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                pendingCompletionTableMouseClicked(evt);
+            }
+        });
         pendingCompletionScrollPanel.setViewportView(pendingCompletionTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -384,7 +529,12 @@ public class MainFrame extends javax.swing.JFrame {
         newDateTable.setRowHeight(40);
         newDateTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         newDateTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        newDateTable.setShowHorizontalLines(false);
+        newDateTable.setShowGrid(true);
+        newDateTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                newDateTableMouseClicked(evt);
+            }
+        });
         newDateScrollPanel.setViewportView(newDateTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -554,6 +704,96 @@ public class MainFrame extends javax.swing.JFrame {
 
         mainContent.add(logsPanel, "logs");
 
+        incidentsPanel.setBackground(new java.awt.Color(0, 153, 204));
+        incidentsPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        incidentsPanel.setLayout(new java.awt.GridBagLayout());
+
+        jLabel18.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel18.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel18.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel18.setText("Incidencias Tramitadas");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(40, 509, 0, 0);
+        incidentsPanel.add(jLabel18, gridBagConstraints);
+
+        pendingIncidentsScrollPanel.setAutoscrolls(true);
+        pendingIncidentsScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        pendingIncidentsScrollPanel.setPreferredSize(new java.awt.Dimension(1100, 250));
+
+        pendingIncidentsTable.setAutoCreateRowSorter(true);
+        pendingIncidentsTable.setBackground(java.awt.SystemColor.control);
+        pendingIncidentsTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pendingIncidentsTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        pendingIncidentsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        pendingIncidentsTable.setFillsViewportHeight(true);
+        pendingIncidentsTable.setFocusable(false);
+        pendingIncidentsTable.setPreferredSize(new java.awt.Dimension(1100, 224));
+        pendingIncidentsTable.setRowHeight(40);
+        pendingIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        pendingIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        pendingIncidentsTable.setShowGrid(false);
+        pendingIncidentsTable.setShowVerticalLines(true);
+        pendingIncidentsScrollPanel.setViewportView(pendingIncidentsTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 224;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 0, 133);
+        incidentsPanel.add(pendingIncidentsScrollPanel, gridBagConstraints);
+
+        jLabel19.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel19.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel19.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel19.setText("Incidencias Pendientes");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(30, 549, 0, 0);
+        incidentsPanel.add(jLabel19, gridBagConstraints);
+
+        processedIncidentsScrollPanel.setFont(new java.awt.Font("Lucida Console", 0, 12)); // NOI18N
+
+        processedIncidentsTable.setAutoCreateRowSorter(true);
+        processedIncidentsTable.setBackground(java.awt.SystemColor.control);
+        processedIncidentsTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        processedIncidentsTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        processedIncidentsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        processedIncidentsTable.setFillsViewportHeight(true);
+        processedIncidentsTable.setFocusable(false);
+        processedIncidentsTable.setPreferredSize(new java.awt.Dimension(1100, 224));
+        processedIncidentsTable.setRowHeight(40);
+        processedIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        processedIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        processedIncidentsTable.setShowHorizontalLines(false);
+        processedIncidentsScrollPanel.setViewportView(processedIncidentsTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 224;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 154, 133);
+        incidentsPanel.add(processedIncidentsScrollPanel, gridBagConstraints);
+
+        mainContent.add(incidentsPanel, "incidents");
+
         formUsersPanel.setBackground(new java.awt.Color(0, 153, 204));
         formUsersPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
         formUsersPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -564,10 +804,10 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel9.setText("Formulario de Usuarios - VD Logistics");
         formUsersPanel.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 40, -1, -1));
 
-        dashboard.setBackground(new java.awt.Color(0, 153, 153));
-        dashboard.setAlignmentX(0.0F);
-        dashboard.setAlignmentY(0.0F);
-        dashboard.setPreferredSize(new java.awt.Dimension(240, 1100));
+        opUsers.setBackground(new java.awt.Color(0, 153, 153));
+        opUsers.setAlignmentX(0.0F);
+        opUsers.setAlignmentY(0.0F);
+        opUsers.setPreferredSize(new java.awt.Dimension(240, 1100));
 
         jLabel5.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 20)); // NOI18N
         jLabel5.setForeground(new java.awt.Color(255, 255, 255));
@@ -607,38 +847,38 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        backButton.setBackground(new java.awt.Color(3, 121, 157));
-        backButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        backButton.setForeground(new java.awt.Color(255, 255, 255));
-        backButton.setText("Volver");
-        backButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        backButton.addActionListener(new java.awt.event.ActionListener() {
+        backUsers.setBackground(new java.awt.Color(3, 121, 157));
+        backUsers.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        backUsers.setForeground(new java.awt.Color(255, 255, 255));
+        backUsers.setText("Volver");
+        backUsers.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        backUsers.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                backButtonActionPerformed(evt);
+                backUsersActionPerformed(evt);
             }
         });
 
-        javax.swing.GroupLayout dashboardLayout = new javax.swing.GroupLayout(dashboard);
-        dashboard.setLayout(dashboardLayout);
-        dashboardLayout.setHorizontalGroup(
-            dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, dashboardLayout.createSequentialGroup()
+        javax.swing.GroupLayout opUsersLayout = new javax.swing.GroupLayout(opUsers);
+        opUsers.setLayout(opUsersLayout);
+        opUsersLayout.setHorizontalGroup(
+            opUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opUsersLayout.createSequentialGroup()
                 .addContainerGap(74, Short.MAX_VALUE)
-                .addGroup(dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(opUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(createUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(updateUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(deleteUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(80, 80, 80))
             .addComponent(jSeparator1)
-            .addGroup(dashboardLayout.createSequentialGroup()
+            .addGroup(opUsersLayout.createSequentialGroup()
                 .addGap(76, 76, 76)
-                .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(backUsers, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        dashboardLayout.setVerticalGroup(
-            dashboardLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(dashboardLayout.createSequentialGroup()
+        opUsersLayout.setVerticalGroup(
+            opUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(opUsersLayout.createSequentialGroup()
                 .addGap(68, 68, 68)
                 .addComponent(jLabel5)
                 .addGap(60, 60, 60)
@@ -650,11 +890,11 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGap(48, 48, 48)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(48, 48, 48)
-                .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(backUsers, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(607, Short.MAX_VALUE))
         );
 
-        formUsersPanel.add(dashboard, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
+        formUsersPanel.add(opUsers, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
 
         jLabel10.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel10.setForeground(new java.awt.Color(255, 255, 255));
@@ -735,31 +975,31 @@ public class MainFrame extends javax.swing.JFrame {
 
         comboUserType.setBackground(new java.awt.Color(255, 255, 255));
         comboUserType.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        comboUserType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Adminstrativo", "Instalador", "Medidor", "Transportista" }));
+        comboUserType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Administrativo", "Operario" }));
         formUsersPanel.add(comboUserType, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 540, 230, 30));
 
         saveDiscardPanel.setBackground(new java.awt.Color(0, 153, 153));
         saveDiscardPanel.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
-        saveButton.setBackground(new java.awt.Color(3, 121, 157));
-        saveButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        saveButton.setForeground(new java.awt.Color(255, 255, 255));
-        saveButton.setText("Guardar");
-        saveButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        saveButton.addActionListener(new java.awt.event.ActionListener() {
+        saveUser.setBackground(new java.awt.Color(3, 121, 157));
+        saveUser.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        saveUser.setForeground(new java.awt.Color(255, 255, 255));
+        saveUser.setText("Guardar");
+        saveUser.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        saveUser.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveButtonActionPerformed(evt);
+                saveUserActionPerformed(evt);
             }
         });
 
-        cancelButton.setBackground(new java.awt.Color(0, 68, 85));
-        cancelButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        cancelButton.setForeground(new java.awt.Color(255, 255, 255));
-        cancelButton.setText("Cancelar");
-        cancelButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+        discardUser.setBackground(new java.awt.Color(0, 68, 85));
+        discardUser.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        discardUser.setForeground(new java.awt.Color(255, 255, 255));
+        discardUser.setText("Cancelar");
+        discardUser.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        discardUser.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
+                discardUserActionPerformed(evt);
             }
         });
 
@@ -769,9 +1009,9 @@ public class MainFrame extends javax.swing.JFrame {
             saveDiscardPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(saveDiscardPanelLayout.createSequentialGroup()
                 .addGap(60, 60, 60)
-                .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(saveUser, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 122, Short.MAX_VALUE)
-                .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(discardUser, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(60, 60, 60))
         );
         saveDiscardPanelLayout.setVerticalGroup(
@@ -779,14 +1019,287 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(saveDiscardPanelLayout.createSequentialGroup()
                 .addGap(38, 38, 38)
                 .addGroup(saveDiscardPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(saveUser, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(discardUser, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(32, Short.MAX_VALUE))
         );
 
         formUsersPanel.add(saveDiscardPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 610, 500, 110));
 
         mainContent.add(formUsersPanel, "formUsers");
+
+        formServicesPanel.setBackground(new java.awt.Color(0, 153, 204));
+        formServicesPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        formServicesPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jLabel20.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel20.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel20.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel20.setText("Formulario de Servicios - VD Logistics");
+        formServicesPanel.add(jLabel20, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 40, -1, -1));
+
+        opServices.setBackground(new java.awt.Color(0, 153, 153));
+        opServices.setAlignmentX(0.0F);
+        opServices.setAlignmentY(0.0F);
+        opServices.setPreferredSize(new java.awt.Dimension(240, 1100));
+
+        jLabel21.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 20)); // NOI18N
+        jLabel21.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel21.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel21.setText("Operaciones");
+
+        jLabel22.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel22.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel22.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel22.setText("ID:");
+
+        txtServiceId.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtServiceId.setForeground(new java.awt.Color(0, 0, 0));
+        txtServiceId.setDisabledTextColor(new java.awt.Color(153, 153, 153));
+        txtServiceId.setEnabled(false);
+
+        createServiceButton.setBackground(new java.awt.Color(0, 68, 85));
+        createServiceButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        createServiceButton.setForeground(new java.awt.Color(255, 255, 255));
+        createServiceButton.setText("Nuevo servicio");
+        createServiceButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        createServiceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createServiceButtonActionPerformed(evt);
+            }
+        });
+
+        updateServiceButton.setBackground(new java.awt.Color(0, 68, 85));
+        updateServiceButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        updateServiceButton.setForeground(new java.awt.Color(255, 255, 255));
+        updateServiceButton.setText("Editar datos");
+        updateServiceButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        updateServiceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateServiceButtonActionPerformed(evt);
+            }
+        });
+
+        deleteServiceButton.setBackground(new java.awt.Color(0, 68, 85));
+        deleteServiceButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        deleteServiceButton.setForeground(new java.awt.Color(255, 255, 255));
+        deleteServiceButton.setText("Eliminar");
+        deleteServiceButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        deleteServiceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteServiceButtonActionPerformed(evt);
+            }
+        });
+
+        backServices.setBackground(new java.awt.Color(3, 121, 157));
+        backServices.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        backServices.setForeground(new java.awt.Color(255, 255, 255));
+        backServices.setText("Volver");
+        backServices.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        backServices.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                backServicesActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout opServicesLayout = new javax.swing.GroupLayout(opServices);
+        opServices.setLayout(opServicesLayout);
+        opServicesLayout.setHorizontalGroup(
+            opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opServicesLayout.createSequentialGroup()
+                .addContainerGap(74, Short.MAX_VALUE)
+                .addGroup(opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel21, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(createServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(updateServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(deleteServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(80, 80, 80))
+            .addComponent(jSeparator2)
+            .addGroup(opServicesLayout.createSequentialGroup()
+                .addGroup(opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(opServicesLayout.createSequentialGroup()
+                        .addGap(76, 76, 76)
+                        .addComponent(backServices, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(opServicesLayout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addComponent(jLabel22)
+                        .addGap(26, 26, 26)
+                        .addComponent(txtServiceId, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        opServicesLayout.setVerticalGroup(
+            opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(opServicesLayout.createSequentialGroup()
+                .addGap(68, 68, 68)
+                .addComponent(jLabel21)
+                .addGap(30, 30, 30)
+                .addGroup(opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel22)
+                    .addComponent(txtServiceId, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(44, 44, 44)
+                .addComponent(createServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(44, 44, 44)
+                .addComponent(updateServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(44, 44, 44)
+                .addComponent(deleteServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(44, 44, 44)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(backServices, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(578, Short.MAX_VALUE))
+        );
+
+        formServicesPanel.add(opServices, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
+
+        jLabel23.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel23.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel23.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel23.setText("Fecha / Hora:");
+        formServicesPanel.add(jLabel23, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 105, -1, -1));
+
+        dcServiceDate.setBackground(new java.awt.Color(255, 255, 255));
+        dcServiceDate.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        formServicesPanel.add(dcServiceDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 100, 140, 30));
+
+        jLabel31.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 24)); // NOI18N
+        jLabel31.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel31.setText("/");
+        formServicesPanel.add(jLabel31, new org.netbeans.lib.awtextra.AbsoluteConstraints(910, 100, -1, -1));
+
+        spServiceHour.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        spServiceHour.setModel(new SpinnerNumberModel(8, 8, 20, 1));
+        spServiceHour.setEditor(new JSpinner.NumberEditor(spServiceHour, "00"));
+        formServicesPanel.add(spServiceHour, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 100, 50, 30));
+
+        jLabel30.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 24)); // NOI18N
+        jLabel30.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel30.setText(":");
+        formServicesPanel.add(jLabel30, new org.netbeans.lib.awtextra.AbsoluteConstraints(980, 100, -1, -1));
+
+        spServiceMinute.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        spServiceMinute.setModel(new SpinnerNumberModel(0, 0, 59, 1));
+        spServiceMinute.setEditor(new JSpinner.NumberEditor(spServiceMinute, "00"));
+        formServicesPanel.add(spServiceMinute, new org.netbeans.lib.awtextra.AbsoluteConstraints(990, 100, 50, 30));
+
+        jLabel27.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel27.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel27.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel27.setText("Descripción:");
+        formServicesPanel.add(jLabel27, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 165, -1, -1));
+
+        txtServiceDescription.setColumns(20);
+        txtServiceDescription.setRows(5);
+        serviceDescriptionJSPanel.setViewportView(txtServiceDescription);
+
+        formServicesPanel.add(serviceDescriptionJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 160, 280, 80));
+
+        jLabel24.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel24.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel24.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel24.setText("Operario:");
+        formServicesPanel.add(jLabel24, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 275, -1, -1));
+
+        cmbServiceOperator.setBackground(new java.awt.Color(255, 255, 255));
+        cmbServiceOperator.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        formServicesPanel.add(cmbServiceOperator, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 270, 280, 30));
+
+        jLabel25.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel25.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel25.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel25.setText("Tipo de servicio:");
+        jLabel25.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+        formServicesPanel.add(jLabel25, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 335, -1, -1));
+
+        cmbServiceType.setBackground(new java.awt.Color(255, 255, 255));
+        cmbServiceType.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        cmbServiceType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Medición", "Transporte", "Montaje" }));
+        formServicesPanel.add(cmbServiceType, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 330, 120, 30));
+
+        jLabel28.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel28.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel28.setText("Cliente:");
+        jLabel28.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+        formServicesPanel.add(jLabel28, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 395, -1, -1));
+
+        cmbServiceCustomer.setBackground(new java.awt.Color(255, 255, 255));
+        cmbServiceCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        formServicesPanel.add(cmbServiceCustomer, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 390, 280, 30));
+
+        jLabel26.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel26.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel26.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel26.setText("Estado:");
+        jLabel26.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+        formServicesPanel.add(jLabel26, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 455, -1, -1));
+
+        cmbServiceStatus.setBackground(new java.awt.Color(255, 255, 255));
+        cmbServiceStatus.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        cmbServiceStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Pendiente", "Confirmado", "Incidencia", "Finalizado", "Pendiente Finalización", "Propuesta nueva fecha", " " }));
+        formServicesPanel.add(cmbServiceStatus, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 450, 180, 30));
+
+        jLabel29.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel29.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel29.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel29.setText("Comentarios:");
+        jLabel29.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+        formServicesPanel.add(jLabel29, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 515, -1, -1));
+
+        txtServiceComments.setColumns(20);
+        txtServiceComments.setRows(5);
+        serviceCommentsJSPanel.setViewportView(txtServiceComments);
+
+        formServicesPanel.add(serviceCommentsJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 510, 280, -1));
+
+        saveDiscardPanel1.setBackground(new java.awt.Color(0, 153, 153));
+        saveDiscardPanel1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        saveService.setBackground(new java.awt.Color(3, 121, 157));
+        saveService.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        saveService.setForeground(new java.awt.Color(255, 255, 255));
+        saveService.setText("Guardar");
+        saveService.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        saveService.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveServiceActionPerformed(evt);
+            }
+        });
+
+        discardService.setBackground(new java.awt.Color(0, 68, 85));
+        discardService.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        discardService.setForeground(new java.awt.Color(255, 255, 255));
+        discardService.setText("Cancelar");
+        discardService.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        discardService.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                discardServiceActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout saveDiscardPanel1Layout = new javax.swing.GroupLayout(saveDiscardPanel1);
+        saveDiscardPanel1.setLayout(saveDiscardPanel1Layout);
+        saveDiscardPanel1Layout.setHorizontalGroup(
+            saveDiscardPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(saveDiscardPanel1Layout.createSequentialGroup()
+                .addGap(60, 60, 60)
+                .addComponent(saveService, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 122, Short.MAX_VALUE)
+                .addComponent(discardService, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(60, 60, 60))
+        );
+        saveDiscardPanel1Layout.setVerticalGroup(
+            saveDiscardPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(saveDiscardPanel1Layout.createSequentialGroup()
+                .addGap(38, 38, 38)
+                .addGroup(saveDiscardPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(saveService, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(discardService, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(32, Short.MAX_VALUE))
+        );
+
+        formServicesPanel.add(saveDiscardPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 610, 500, 110));
+
+        mainContent.add(formServicesPanel, "formServices");
 
         mainScrollPanel.setViewportView(mainContent);
 
@@ -821,6 +1334,11 @@ public class MainFrame extends javax.swing.JFrame {
         servicesMenu.setText("Servicios");
 
         jMenuItem4.setText("Crear Nuevo");
+        jMenuItem4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem4ActionPerformed(evt);
+            }
+        });
         servicesMenu.add(jMenuItem4);
 
         jMenuItem5.setText("Confirmados / Por Confirmar Cita");
@@ -847,6 +1365,11 @@ public class MainFrame extends javax.swing.JFrame {
         incidentsMenu.add(jMenuItem6);
 
         jMenuItem7.setText("Listado de Incidencias");
+        jMenuItem7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem7ActionPerformed(evt);
+            }
+        });
         incidentsMenu.add(jMenuItem7);
 
         jMenuBar.add(incidentsMenu);
@@ -928,47 +1451,35 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_formComponentResized
 
     private void jMenuItem5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem5ActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "services");
-        updateScroll();
+        navigateCard("services");
     }//GEN-LAST:event_jMenuItem5ActionPerformed
 
     private void jMenuItem11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem11ActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "otherServices");
-        updateScroll();
+        navigateCard("otherServices");
     }//GEN-LAST:event_jMenuItem11ActionPerformed
 
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "users");
-        updateScroll();
+        navigateCard("users");
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void jMenuItem9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem9ActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "customers");
-        updateScroll();
+        navigateCard("customers");
     }//GEN-LAST:event_jMenuItem9ActionPerformed
 
     private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "logs");
-        updateScroll();
+        navigateCard("logs");
     }//GEN-LAST:event_jMenuItem3ActionPerformed
 
     private void createUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createUserButtonActionPerformed
-        clearForm();
+        clearForm(formUsersPanel);
         enabledDashboardButtons();
         createUserButton.setEnabled(false);
         txtUserFirstName.requestFocus();
     }//GEN-LAST:event_createUserButtonActionPerformed
 
     private void updateUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateUserButtonActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "users");
-        updateScroll();
-        clearForm();
+        navigateCard("users");
+        clearForm(formUsersPanel);
         enabledDashboardButtons();
     }//GEN-LAST:event_updateUserButtonActionPerformed
 
@@ -980,41 +1491,33 @@ public class MainFrame extends javax.swing.JFrame {
                 boolean success = DataUser.deleteUser(userId, this);
                 if (success) {
                     JOptionPane.showMessageDialog(this, "Usuario eliminado correctamente");
-                    CardLayout cl = (CardLayout) mainContent.getLayout();
-                    cl.show(mainContent, "users");
-                    updateScroll();
-                    clearForm();
+                    navigateCard("users");
+                    clearForm(formUsersPanel);
                     enabledDashboardButtons();
                 }
             }
         } else {
-            CardLayout cl = (CardLayout) mainContent.getLayout();
-            cl.show(mainContent, "users");
-            updateScroll();
-            clearForm();
+            navigateCard("users");
+            clearForm(formUsersPanel);
             enabledDashboardButtons();
         }
     }//GEN-LAST:event_deleteUserButtonActionPerformed
 
-    private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "users");
-        updateScroll();
-        clearForm();
+    private void backUsersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backUsersActionPerformed
+        navigateCard("users");
+        clearForm(formUsersPanel);
         enabledDashboardButtons();
-    }//GEN-LAST:event_backButtonActionPerformed
+    }//GEN-LAST:event_backUsersActionPerformed
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "formUsers");
-        updateScroll();
-        clearForm();
+        navigateCard("formUsers");
+        clearForm(formUsersPanel);
+        enabledDashboardButtons();
         createUserButton.setEnabled(false);
         txtUserFirstName.requestFocus();
-        System.out.println(txtUserId.getText());
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
-    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+    private void saveUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveUserActionPerformed
         if (txtUserId.getText().isEmpty()) {
             createUser();
         } else {
@@ -1028,24 +1531,20 @@ public class MainFrame extends javax.swing.JFrame {
             boolean success = DataUser.updateUser(userId, firstName, lastName, phone, address, type);
             if (success) {
                 JOptionPane.showMessageDialog(this, "Usuario actualizado correctamente");
-                CardLayout cl = (CardLayout) mainContent.getLayout();
-                cl.show(mainContent, "users");
-                updateScroll();
-                clearForm();
+                navigateCard("users");
+                clearForm(formUsersPanel);
                 enabledDashboardButtons();
             } else {
                 JOptionPane.showMessageDialog(this, "Error al actualizar usuario");
             }
         }
-    }//GEN-LAST:event_saveButtonActionPerformed
+    }//GEN-LAST:event_saveUserActionPerformed
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        CardLayout cl = (CardLayout) mainContent.getLayout();
-        cl.show(mainContent, "users");
-        updateScroll();
-        clearForm();
+    private void discardUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_discardUserActionPerformed
+        navigateCard("users");
+        clearForm(formUsersPanel);
         enabledDashboardButtons();
-    }//GEN-LAST:event_cancelButtonActionPerformed
+    }//GEN-LAST:event_discardUserActionPerformed
 
     private void usersTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_usersTableMouseClicked
         int selectedRow = usersTable.getSelectedRow();
@@ -1053,9 +1552,7 @@ public class MainFrame extends javax.swing.JFrame {
             String userId = usersTable.getValueAt(selectedRow, 0).toString();
             Map<String, String> userData = DataUser.getDataUser(userId);
             if (!userData.isEmpty()) {
-                CardLayout cl = (CardLayout) mainContent.getLayout();
-                cl.show(mainContent, "formUsers");
-                updateScroll();
+                navigateCard("formUsers");
                 updateUserButton.setEnabled(false);
                 txtUserFirstName.requestFocus();
                 showUserForm(userData);
@@ -1069,57 +1566,207 @@ public class MainFrame extends javax.swing.JFrame {
         System.exit(0);
     }//GEN-LAST:event_jMenuItem12ActionPerformed
 
+    private void jMenuItem7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem7ActionPerformed
+        navigateCard("incidents");
+    }//GEN-LAST:event_jMenuItem7ActionPerformed
+
+    private void createServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createServiceButtonActionPerformed
+        clearForm(formServicesPanel);
+        txtServiceId.setText("");
+        enabledDashboardButtons();
+        createServiceButton.setEnabled(false);
+        dcServiceDate.requestFocus();
+    }//GEN-LAST:event_createServiceButtonActionPerformed
+
+    private void updateServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateServiceButtonActionPerformed
+        navigateCard("services");
+        clearForm(formServicesPanel);
+        txtServiceId.setText("");
+        enabledDashboardButtons();
+    }//GEN-LAST:event_updateServiceButtonActionPerformed
+
+    private void deleteServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteServiceButtonActionPerformed
+        if (!txtServiceId.getText().isEmpty()) {
+            int confirm = JOptionPane.showConfirmDialog(this, "¿ Estás seguro de eliminar este servicio ?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+            String serviceId = txtServiceId.getText().trim();
+            if (confirm == JOptionPane.YES_OPTION) {
+//                boolean success = DataService.deleteService(serviceId, this);
+//                if (success) {
+//                    JOptionPane.showMessageDialog(this, "Servicio eliminado correctamente");
+//                    CardLayout cl = (CardLayout) mainContent.getLayout();
+//                    cl.show(mainContent, "services");
+//                    updateScroll();
+//                    clearForm(formServicesPanel);
+//                    enabledDashboardButtons();
+//                }
+            }
+        } else {
+            navigateCard("services");
+            clearForm(formUsersPanel);
+            enabledDashboardButtons();
+        }
+    }//GEN-LAST:event_deleteServiceButtonActionPerformed
+
+    private void backServicesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backServicesActionPerformed
+        if (cmbServiceStatus.getSelectedItem() == "Propuesta nueva fecha" || cmbServiceStatus.getSelectedItem() == "Pendiente Finalización") {
+            navigateCard("otherServices");
+        } else {
+            navigateCard("services");
+        }
+        clearForm(formServicesPanel);
+        enabledDashboardButtons();
+    }//GEN-LAST:event_backServicesActionPerformed
+
+    private void saveServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveServiceActionPerformed
+        if (txtServiceId.getText().isEmpty()) {
+            saveService("new");
+        } else {
+            saveService("update");
+            navigateCard("services");
+            clearForm(formServicesPanel);
+            enabledDashboardButtons();
+        }
+    }//GEN-LAST:event_saveServiceActionPerformed
+
+    private void discardServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_discardServiceActionPerformed
+        if (cmbServiceStatus.getSelectedItem() == "Propuesta nueva fecha" || cmbServiceStatus.getSelectedItem() == "Pendiente Finalización") {
+            navigateCard("otherServices");
+        } else {
+            navigateCard("services");
+        }
+        clearForm(formServicesPanel);
+        enabledDashboardButtons();
+    }//GEN-LAST:event_discardServiceActionPerformed
+
+    private void confirmedTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_confirmedTableMouseClicked
+        int selectedRow = confirmedTable.getSelectedRow();
+        if (selectedRow != -1 && confirmedTable.getValueAt(selectedRow, 1) != "No hay servicios") {
+            String serviceId = confirmedTable.getValueAt(selectedRow, 0).toString();
+            Service serviceData = DataService.getServiceById(serviceId);
+            if (serviceData != null) {
+                navigateCard("formServices");
+                updateServiceButton.setEnabled(false);
+                showServiceForm(serviceData);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario");
+            }
+        }
+    }//GEN-LAST:event_confirmedTableMouseClicked
+
+    private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
+        navigateCard("formServices");
+        clearForm(formServicesPanel);
+        txtServiceId.setText("");
+        enabledDashboardButtons();
+        createServiceButton.setEnabled(false);
+    }//GEN-LAST:event_jMenuItem4ActionPerformed
+
+    private void pendingTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pendingTableMouseClicked
+        int selectedRow = pendingTable.getSelectedRow();
+        if (selectedRow != -1 && pendingTable.getValueAt(selectedRow, 1) != "No hay servicios") {
+            String serviceId = pendingTable.getValueAt(selectedRow, 0).toString();
+            Service serviceData = DataService.getServiceById(serviceId);
+            if (serviceData != null) {
+                navigateCard("formServices");
+                updateServiceButton.setEnabled(false);
+                showServiceForm(serviceData);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario");
+            }
+        }
+    }//GEN-LAST:event_pendingTableMouseClicked
+
+    private void pendingCompletionTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pendingCompletionTableMouseClicked
+        int selectedRow = pendingCompletionTable.getSelectedRow();
+        if (selectedRow != -1 && pendingCompletionTable.getValueAt(selectedRow, 1) != "No hay servicios") {
+            String serviceId = pendingCompletionTable.getValueAt(selectedRow, 0).toString();
+            Service serviceData = DataService.getServiceById(serviceId);
+            if (serviceData != null) {
+                navigateCard("formServices");
+                updateServiceButton.setEnabled(false);
+                showServiceForm(serviceData);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario");
+            }
+        }
+    }//GEN-LAST:event_pendingCompletionTableMouseClicked
+
+    private void newDateTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_newDateTableMouseClicked
+        int selectedRow = newDateTable.getSelectedRow();
+        if (selectedRow != -1 && newDateTable.getValueAt(selectedRow, 1) != "No hay servicios") {
+            String serviceId = newDateTable.getValueAt(selectedRow, 0).toString();
+            Service serviceData = DataService.getServiceById(serviceId);
+            if (serviceData != null) {
+                navigateCard("formServices");
+                updateServiceButton.setEnabled(false);
+                showServiceForm(serviceData);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario");
+            }
+        }
+    }//GEN-LAST:event_newDateTableMouseClicked
+
     /**
      * @param args the command line arguments
      */
-//    public static void main(String args[]) {
-//        /* Set the Nimbus look and feel */
-//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-//         */
-//        try {
-//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-//                if ("Nimbus".equals(info.getName())) {
-//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-//                    break;
-//                }
-//            }
-//        } catch (ClassNotFoundException ex) {
-//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (InstantiationException ex) {
-//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (IllegalAccessException ex) {
-//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        }
-//        //</editor-fold>
-//
-//        /* Create and display the form */
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                new MainFrame().setVisible(true);
-//            }
-//        });
-//    }
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new MainFrame("vdjoseluis@outlook.com").setVisible(true);
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton backButton;
-    private javax.swing.JButton cancelButton;
+    private javax.swing.JButton backServices;
+    private javax.swing.JButton backUsers;
+    private javax.swing.JComboBox<String> cmbServiceCustomer;
+    private javax.swing.JComboBox<String> cmbServiceOperator;
+    private javax.swing.JComboBox<String> cmbServiceStatus;
+    private javax.swing.JComboBox<String> cmbServiceType;
     private javax.swing.JComboBox<String> comboUserType;
     private javax.swing.JScrollPane confirmedScrollPanel;
     private javax.swing.JTable confirmedTable;
+    private javax.swing.JButton createServiceButton;
     private javax.swing.JButton createUserButton;
     private javax.swing.JMenu currentUserMenu;
     private javax.swing.JMenu customersMenu;
     private javax.swing.JPanel customersPanel;
     private javax.swing.JScrollPane customersScrollPanel;
     private javax.swing.JTable customersTable;
-    private javax.swing.JPanel dashboard;
+    private com.toedter.calendar.JDateChooser dcServiceDate;
+    private javax.swing.JButton deleteServiceButton;
     private javax.swing.JButton deleteUserButton;
+    private javax.swing.JButton discardService;
+    private javax.swing.JButton discardUser;
+    private javax.swing.JPanel formServicesPanel;
     private javax.swing.JPanel formUsersPanel;
     private javax.swing.JMenu incidentsMenu;
+    private javax.swing.JPanel incidentsPanel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1129,8 +1776,22 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel24;
+    private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
+    private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
+    private javax.swing.JLabel jLabel31;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -1151,6 +1812,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem8;
     private javax.swing.JMenuItem jMenuItem9;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel loadingLabel;
     private javax.swing.JPanel logsPanel;
     private javax.swing.JScrollPane logsScrollPanel;
@@ -1159,15 +1821,30 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane mainScrollPanel;
     private javax.swing.JScrollPane newDateScrollPanel;
     private javax.swing.JTable newDateTable;
+    private javax.swing.JPanel opServices;
+    private javax.swing.JPanel opUsers;
     private javax.swing.JPanel otherServicesPanel;
     private javax.swing.JScrollPane pendingCompletionScrollPanel;
     private javax.swing.JTable pendingCompletionTable;
+    private javax.swing.JScrollPane pendingIncidentsScrollPanel;
+    private javax.swing.JTable pendingIncidentsTable;
     private javax.swing.JScrollPane pendingScrollPanel;
     private javax.swing.JTable pendingTable;
-    private javax.swing.JButton saveButton;
+    private javax.swing.JScrollPane processedIncidentsScrollPanel;
+    private javax.swing.JTable processedIncidentsTable;
     private javax.swing.JPanel saveDiscardPanel;
+    private javax.swing.JPanel saveDiscardPanel1;
+    private javax.swing.JButton saveService;
+    private javax.swing.JButton saveUser;
+    private javax.swing.JScrollPane serviceCommentsJSPanel;
+    private javax.swing.JScrollPane serviceDescriptionJSPanel;
     private javax.swing.JMenu servicesMenu;
     private javax.swing.JPanel servicesPanel;
+    private javax.swing.JSpinner spServiceHour;
+    private javax.swing.JSpinner spServiceMinute;
+    private javax.swing.JTextArea txtServiceComments;
+    private javax.swing.JTextArea txtServiceDescription;
+    private javax.swing.JTextField txtServiceId;
     private javax.swing.JTextField txtUserAddress;
     private javax.swing.JTextField txtUserEmail;
     private javax.swing.JTextField txtUserFirstName;
@@ -1175,6 +1852,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTextField txtUserLastName;
     private javax.swing.JPasswordField txtUserPassword;
     private javax.swing.JTextField txtUserPhone;
+    private javax.swing.JButton updateServiceButton;
     private javax.swing.JButton updateUserButton;
     private javax.swing.JMenu usersMenu;
     private javax.swing.JPanel usersPanel;

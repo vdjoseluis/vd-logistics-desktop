@@ -1,17 +1,18 @@
 package com.vdjoseluis.vdlogistics.firebase.data;
 
-import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
 import com.vdjoseluis.vdlogistics.models.User;
 import com.vdjoseluis.vdlogistics.ui.LoginFrame;
-import com.vdjoseluis.vdlogistics.ui.MainFrame;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -42,7 +43,7 @@ public class DataUser {
 
     public static void loadUsers(JTable table, JLabel loadingLabel, JScrollPane scrollPane) {
         CollectionReference users = db.collection("users");
-        Query query = users.orderBy("lastName", Query.Direction.ASCENDING);
+        Query query = users.orderBy("type", Query.Direction.ASCENDING);
 
         SwingUtilities.invokeLater(() -> {
             loadingLabel.setBounds(scrollPane.getX() + 640, scrollPane.getY() + 120, 100, 100);
@@ -117,7 +118,7 @@ public class DataUser {
 
             System.out.println("✅ Usuario creado en Authentication y Firestore: " + user.getEmail());
             return true;
-        } catch (Exception e) {
+        } catch (FirebaseAuthException | InterruptedException | ExecutionException e) {
             System.err.println("❌ Error creando usuario: " + e.getMessage());
             return false;
         }
@@ -130,7 +131,7 @@ public class DataUser {
             DocumentSnapshot document = userRef.get().get();
 
             if (document.exists()) {
-                userData.put("id", userId.toString());
+                userData.put("id", userId);
                 userData.put("email", document.getString("email"));
                 userData.put("firstName", document.getString("firstName"));
                 userData.put("lastName", document.getString("lastName"));
@@ -153,11 +154,35 @@ public class DataUser {
                 String lastName = doc.getString("lastName");
                 return new User(firstName, lastName);
             }
-        } catch (Exception e) {
+        } catch (FirebaseAuthException | InterruptedException | ExecutionException e) {
             System.err.println("❌ Error obteniendo usuario autenticado: " + e.getMessage());
         }
         return null;
     }
+    
+    public static final Map<String, String> operatorMap = new HashMap<>();
+
+    public static void listenForOperatorNames(JComboBox<String> combo) {
+        db.collection("users").whereNotEqualTo("type", "Administrativo")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        System.out.println("Error escuchando cambios: " + e.getMessage());
+                        return;
+                    }
+                    if (snapshots != null) {
+                        SwingUtilities.invokeLater(() -> {
+                            combo.removeAllItems();
+                            operatorMap.clear();
+                            for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                                String id = doc.getId();
+                                String name = doc.getString("firstName") + " " + doc.getString("lastName");
+                                combo.addItem(name);
+                                operatorMap.put(name, id);
+                            }
+                        });
+                    }
+                });
+    }    
 
     public static boolean updateUser(String userId, String firstName, String lastName, String phone, String address, String type) {
         try {

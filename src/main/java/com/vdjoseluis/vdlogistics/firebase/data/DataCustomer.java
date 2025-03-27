@@ -2,6 +2,11 @@ package com.vdjoseluis.vdlogistics.firebase.data;
 
 import com.google.cloud.firestore.*;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -49,22 +54,22 @@ public class DataCustomer {
             DefaultTableModel model = new DefaultTableModel(COLUMN_NAMES, 0) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
-                    return false; 
+                    return false;
                 }
             };
 
             if (snapshots != null && !snapshots.isEmpty()) {
                 for (QueryDocumentSnapshot document : snapshots) {
                     String customerId = document.getId();
-                    
+
                     String fullName = document.getString("firstName") + " " + document.getString("lastName");
 
                     String phone = document.getString("phone");
 
                     String email = document.getString("email");
-                    
+
                     String address = document.getString("address");
-                    
+
                     String addressAdditional = document.getString("addressAdditional");
 
                     model.addRow(new Object[]{
@@ -87,6 +92,29 @@ public class DataCustomer {
                 table.setVisible(true);
             });
         });
-    }    
+    }
+
+    public static final Map<String, String> customerMap = new HashMap<>();
+
+    public static void listenForCustomerNames(JComboBox<String> combo) {
+        db.collection("customers").addSnapshotListener((snapshots, e) -> {
+            if (e != null) {
+                System.out.println("Error escuchando cambios: " + e.getMessage());
+                return;
+            }
+            if (snapshots != null) {
+                SwingUtilities.invokeLater(() -> {
+                    combo.removeAllItems();
+                    customerMap.clear();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        String id = doc.getId();
+                        String name = doc.getString("firstName") + " " + doc.getString("lastName");
+                        combo.addItem(name);
+                        customerMap.put(name, id);
+                    }
+                });
+            }
+        });
+    }
 
 }
