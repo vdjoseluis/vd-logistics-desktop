@@ -2,16 +2,21 @@ package com.vdjoseluis.vdlogistics.firebase.data;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserRecord;
 import com.toedter.calendar.JDateChooser;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
 import com.vdjoseluis.vdlogistics.models.Service;
+import com.vdjoseluis.vdlogistics.ui.LoginFrame;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
@@ -157,7 +162,7 @@ public class DataService {
         return null;
     }
 
-    public static boolean createService(Service service, JDateChooser date, JSpinner hour, JSpinner minutes) {
+    public static boolean createService(Service service, String userEmail, JDateChooser date, JSpinner hour, JSpinner minutes) {
         try {
             DocumentReference docRef = db.collection("services").document();
             
@@ -173,11 +178,39 @@ public class DataService {
             data.put("refCustomer", db.collection("customers").document(customerId));
             data.put("comments", service.getComments());
 
-            docRef.set(data);
+            docRef.set(data);                        
+            DataLogs.registerLog(userEmail, "Añade servicio", docRef.getId());
 
             System.out.println("✅ Servicio creado correctamente ");
             return true;
         } catch (Exception e) {
+            System.err.println("❌ Error creando servicio: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    public static boolean updateService(Service service, String userEmail, JDateChooser date, JSpinner hour, JSpinner minutes) {
+        try {
+            DocumentReference docRef = db.collection("services").document(service.getId());
+            
+            String operatorId = DataUser.operatorMap.get(service.getOperator());
+            String customerId = DataCustomer.customerMap.get(service.getCustomer());
+                        
+            Map<String, Object> data = new HashMap<>();
+            data.put("date", getTimestamp(date, hour, minutes));
+            data.put("description", service.getDescription());
+            data.put("refOperator", db.collection("users").document(operatorId));
+            data.put("type", service.getType());
+            data.put("status", service.getStatus());
+            data.put("refCustomer", db.collection("customers").document(customerId));
+            data.put("comments", service.getComments());
+
+            docRef.update(data).get();
+            DataLogs.registerLog(userEmail, "Actualiza servicio", docRef.getId());
+
+            System.out.println("✅ Servicio actualizado correctamente ");
+            return true;
+        } catch (InterruptedException | ExecutionException e) {
             System.err.println("❌ Error creando servicio: " + e.getMessage());
             return false;
         }
@@ -201,28 +234,14 @@ public class DataService {
         }
     }
     
-    public static boolean updateService(Service service, JDateChooser date, JSpinner hour, JSpinner minutes) {
+    public static boolean deleteService(String userEmail, String serviceId) {
         try {
-            DocumentReference docRef = db.collection("services").document(service.getId());
-            
-            String operatorId = DataUser.operatorMap.get(service.getOperator());
-            String customerId = DataCustomer.customerMap.get(service.getCustomer());
-                        
-            Map<String, Object> data = new HashMap<>();
-            data.put("date", getTimestamp(date, hour, minutes));
-            data.put("description", service.getDescription());
-            data.put("refOperator", db.collection("users").document(operatorId));
-            data.put("type", service.getType());
-            data.put("status", service.getStatus());
-            data.put("refCustomer", db.collection("customers").document(customerId));
-            data.put("comments", service.getComments());
-
-            docRef.update(data).get();
-
-            System.out.println("✅ Servicio actualizado correctamente ");
+            db.collection("services").document(serviceId).delete().get();
+            DataLogs.registerLog(userEmail, "Elimina servicio", serviceId);
+            System.out.println("Usuario eliminado correctamente");
             return true;
-        } catch (InterruptedException | ExecutionException e) {
-            System.err.println("❌ Error creando servicio: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error al eliminar usuario: " + e.getMessage());
             return false;
         }
     }

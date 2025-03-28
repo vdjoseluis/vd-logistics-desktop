@@ -1,12 +1,21 @@
 package com.vdjoseluis.vdlogistics.firebase.data;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.toedter.calendar.JDateChooser;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
+import com.vdjoseluis.vdlogistics.models.Service;
+import com.vdjoseluis.vdlogistics.models.User;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -103,6 +112,26 @@ public class DataLogs {
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
             return "Desconocido";
+        }
+    }
+    
+    public static boolean registerLog(String email, String action, String serviceId) {
+        try {
+            DocumentReference docRef = db.collection("logs").document();
+            
+            String userId = FirebaseAuth.getInstance().getUserByEmail(email).getUid();
+                        
+            Map<String, Object> data = new HashMap<>();
+            data.put("date", Timestamp.now());
+            data.put("refOperator", db.collection("users").document(userId));
+            data.put("action", action);
+            data.put("refService", db.collection("services").document(serviceId));
+
+            docRef.set(data);
+            return true;
+        } catch (FirebaseAuthException e) {
+            System.err.println("❌ Error creando servicio: " + e.getMessage());
+            return false;
         }
     }
 
