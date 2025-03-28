@@ -14,12 +14,13 @@ com\vdjoseluis\vdlogistics\firebase\data\DataService$1.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$2.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$27.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$24.class
-com\vdjoseluis\vdlogistics\firebase\FirebaseStorage.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$19.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$9.class
+com\vdjoseluis\vdlogistics\ui\MainFrame$30.class
 com\vdjoseluis\vdlogistics\firebase\data\DataCustomer$1.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$16.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$21.class
+com\vdjoseluis\vdlogistics\firebase\storage\FileUploader.class
 com\vdjoseluis\vdlogistics\Main.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$28.class
 com\vdjoseluis\vdlogistics\ui\LoginFrame$3.class
@@ -51,6 +52,8 @@ com\vdjoseluis\vdlogistics\ui\MainFrame$1.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$11.class
 com\vdjoseluis\vdlogistics\ui\LoginFrame$1.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$26.class
+com\vdjoseluis\vdlogistics\ui\MainFrame$31.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$8.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$18.class
 com\vdjoseluis\vdlogistics\firebase\FirebaseConfig.class
+com\vdjoseluis\vdlogistics\firebase\storage\FileOpener.class

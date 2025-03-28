@@ -6,7 +6,8 @@ C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main
 C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\firebase\data\DataUser.java
 C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\firebase\FirebaseAuthService.java
 C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\firebase\FirebaseConfig.java
-C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\firebase\FirebaseStorage.java
+C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\firebase\storage\FileOpener.java
+C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\firebase\storage\FileUploader.java
 C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\Main.java
 C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\maps\GoogleMapsLinkResolver.java
 C:\Users\vdjos\OneDrive\Documentos\NetBeansProjects\VDLogistics-desktop\src\main\java\com\vdjoseluis\vdlogistics\maps\GoogleMapsParser.java

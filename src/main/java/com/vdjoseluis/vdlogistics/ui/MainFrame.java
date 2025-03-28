@@ -1,12 +1,12 @@
 package com.vdjoseluis.vdlogistics.ui;
 
-import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
-import com.vdjoseluis.vdlogistics.firebase.FirebaseStorage;
 import com.vdjoseluis.vdlogistics.firebase.data.DataCustomer;
 import com.vdjoseluis.vdlogistics.firebase.data.DataIncident;
 import com.vdjoseluis.vdlogistics.firebase.data.DataLogs;
 import com.vdjoseluis.vdlogistics.firebase.data.DataService;
 import com.vdjoseluis.vdlogistics.firebase.data.DataUser;
+import com.vdjoseluis.vdlogistics.firebase.storage.FileOpener;
+import com.vdjoseluis.vdlogistics.firebase.storage.FileUploader;
 import com.vdjoseluis.vdlogistics.models.Service;
 import com.vdjoseluis.vdlogistics.models.User;
 import java.awt.CardLayout;
@@ -14,13 +14,14 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.io.File;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
-import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -67,7 +68,7 @@ public class MainFrame extends javax.swing.JFrame {
         DataIncident.loadIncidents(pendingIncidentsTable, "Pendiente", loadingLabel, mainScrollPanel);
         DataIncident.loadIncidents(processedIncidentsTable, "Tramitada", loadingLabel, mainScrollPanel);
     }
-    
+
     private void updateScroll() {
         mainContent.revalidate();
         mainContent.repaint();
@@ -214,6 +215,7 @@ public class MainFrame extends javax.swing.JFrame {
         java.awt.GridBagConstraints gridBagConstraints;
 
         loadingLabel = new javax.swing.JLabel();
+        jFileChooser = new javax.swing.JFileChooser();
         mainScrollPanel = new javax.swing.JScrollPane();
         mainContent = new javax.swing.JPanel();
         servicesPanel = new BackgroundPanel();
@@ -315,6 +317,7 @@ public class MainFrame extends javax.swing.JFrame {
         saveDiscardPanel1 = new javax.swing.JPanel();
         saveService = new javax.swing.JButton();
         discardService = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
         jMenuBar = new javax.swing.JMenuBar();
         usersMenu = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -336,6 +339,8 @@ public class MainFrame extends javax.swing.JFrame {
 
         loadingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         loadingLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/loaderSpinner.gif"))); // NOI18N
+
+        jFileChooser.setMultiSelectionEnabled(true);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("VD Logistics");
@@ -1167,22 +1172,22 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel31.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 24)); // NOI18N
         jLabel31.setForeground(new java.awt.Color(255, 255, 255));
         jLabel31.setText("/");
-        formServicesPanel.add(jLabel31, new org.netbeans.lib.awtextra.AbsoluteConstraints(910, 100, -1, -1));
+        formServicesPanel.add(jLabel31, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 100, 10, -1));
 
         spServiceHour.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         spServiceHour.setModel(new SpinnerNumberModel(8, 8, 20, 1));
         spServiceHour.setEditor(new JSpinner.NumberEditor(spServiceHour, "00"));
-        formServicesPanel.add(spServiceHour, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 100, 50, 30));
+        formServicesPanel.add(spServiceHour, new org.netbeans.lib.awtextra.AbsoluteConstraints(970, 100, 50, 30));
 
         jLabel30.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 24)); // NOI18N
         jLabel30.setForeground(new java.awt.Color(255, 255, 255));
         jLabel30.setText(":");
-        formServicesPanel.add(jLabel30, new org.netbeans.lib.awtextra.AbsoluteConstraints(980, 100, -1, -1));
+        formServicesPanel.add(jLabel30, new org.netbeans.lib.awtextra.AbsoluteConstraints(1030, 100, -1, -1));
 
         spServiceMinute.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         spServiceMinute.setModel(new SpinnerNumberModel(0, 0, 59, 1));
         spServiceMinute.setEditor(new JSpinner.NumberEditor(spServiceMinute, "00"));
-        formServicesPanel.add(spServiceMinute, new org.netbeans.lib.awtextra.AbsoluteConstraints(990, 100, 50, 30));
+        formServicesPanel.add(spServiceMinute, new org.netbeans.lib.awtextra.AbsoluteConstraints(1050, 100, 50, 30));
 
         jLabel27.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel27.setForeground(new java.awt.Color(255, 255, 255));
@@ -1194,7 +1199,7 @@ public class MainFrame extends javax.swing.JFrame {
         txtServiceDescription.setRows(5);
         serviceDescriptionJSPanel.setViewportView(txtServiceDescription);
 
-        formServicesPanel.add(serviceDescriptionJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 160, 280, -1));
+        formServicesPanel.add(serviceDescriptionJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 160, 340, -1));
 
         jLabel24.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel24.setForeground(new java.awt.Color(255, 255, 255));
@@ -1204,7 +1209,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         cmbServiceOperator.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceOperator.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        formServicesPanel.add(cmbServiceOperator, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 270, 280, 30));
+        formServicesPanel.add(cmbServiceOperator, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 270, 340, 30));
 
         jLabel25.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel25.setForeground(new java.awt.Color(255, 255, 255));
@@ -1216,7 +1221,7 @@ public class MainFrame extends javax.swing.JFrame {
         cmbServiceType.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceType.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         cmbServiceType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Medición", "Transporte", "Montaje" }));
-        formServicesPanel.add(cmbServiceType, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 330, 120, 30));
+        formServicesPanel.add(cmbServiceType, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 330, 180, 30));
 
         jLabel28.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel28.setForeground(new java.awt.Color(255, 255, 255));
@@ -1227,7 +1232,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         cmbServiceCustomer.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        formServicesPanel.add(cmbServiceCustomer, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 390, 280, 30));
+        formServicesPanel.add(cmbServiceCustomer, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 390, 340, 30));
 
         jLabel26.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel26.setForeground(new java.awt.Color(255, 255, 255));
@@ -1249,11 +1254,11 @@ public class MainFrame extends javax.swing.JFrame {
         formServicesPanel.add(jLabel32, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 515, -1, -1));
 
         txtServiceComments.setColumns(20);
-        txtServiceComments.setRows(5);
+        txtServiceComments.setRows(4);
         txtServiceComments.setPreferredSize(new java.awt.Dimension(160, 60));
         serviceCommentsJSPanel.setViewportView(txtServiceComments);
 
-        formServicesPanel.add(serviceCommentsJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 510, 280, 70));
+        formServicesPanel.add(serviceCommentsJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 510, 340, -1));
 
         jLabel29.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel29.setForeground(new java.awt.Color(255, 255, 255));
@@ -1267,14 +1272,24 @@ public class MainFrame extends javax.swing.JFrame {
         addFileButton.setForeground(new java.awt.Color(255, 255, 255));
         addFileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/54719.png"))); // NOI18N
         addFileButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        addFileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addFileButtonActionPerformed(evt);
+            }
+        });
         formServicesPanel.add(addFileButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 640, 30, 30));
 
         sharedFilesJSPanel.setPreferredSize(new java.awt.Dimension(280, 60));
 
         sharedFileList.setPreferredSize(new java.awt.Dimension(30, 60));
+        sharedFileList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                sharedFileListMouseClicked(evt);
+            }
+        });
         sharedFilesJSPanel.setViewportView(sharedFileList);
 
-        formServicesPanel.add(sharedFilesJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 610, 280, 60));
+        formServicesPanel.add(sharedFilesJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 610, 340, 80));
 
         saveDiscardPanel1.setBackground(new java.awt.Color(0, 153, 153));
         saveDiscardPanel1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -1322,7 +1337,8 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap(32, Short.MAX_VALUE))
         );
 
-        formServicesPanel.add(saveDiscardPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 700, 500, 110));
+        formServicesPanel.add(saveDiscardPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 720, 500, 110));
+        formServicesPanel.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(1120, 610, 30, 30));
 
         mainContent.add(formServicesPanel, "formServices");
 
@@ -1664,6 +1680,7 @@ public class MainFrame extends javax.swing.JFrame {
             String serviceId = confirmedTable.getValueAt(selectedRow, 0).toString();
             Service serviceData = DataService.getServiceById(serviceId);
             if (serviceData != null) {
+                FileOpener fileOpener = new FileOpener(sharedFileList, serviceId);
                 navigateCard("formServices");
                 updateServiceButton.setEnabled(false);
                 showServiceForm(serviceData);
@@ -1725,6 +1742,39 @@ public class MainFrame extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_newDateTableMouseClicked
+
+    private void sharedFileListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sharedFileListMouseClicked
+        if (evt.getClickCount() == 2) {
+            FileOpener.openSelectedFile(sharedFileList, txtServiceId.getText());
+        }
+    }//GEN-LAST:event_sharedFileListMouseClicked
+
+    private void addFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addFileButtonActionPerformed
+        int returnVal = jFileChooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File[] selectedFiles = jFileChooser.getSelectedFiles();
+
+            String serviceId = txtServiceId.getText();
+
+            for (File selectedFile : selectedFiles) {
+                String fileName = selectedFile.getName();
+
+                String storagePath = "services/" + serviceId + "/" + fileName;
+
+                try {
+                    FileUploader.uploadFile(selectedFile, storagePath);
+                    FileOpener fileOpener = new FileOpener(sharedFileList, serviceId);
+                    System.out.println("Archivo subido exitosamente a: " + storagePath); 
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, "Error al subir el archivo " + fileName + ": " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    e.printStackTrace();
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, "Archivos subidos correctamente.", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+
+        }
+    }//GEN-LAST:event_addFileButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1788,6 +1838,8 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel formUsersPanel;
     private javax.swing.JMenu incidentsMenu;
     private javax.swing.JPanel incidentsPanel;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JFileChooser jFileChooser;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
