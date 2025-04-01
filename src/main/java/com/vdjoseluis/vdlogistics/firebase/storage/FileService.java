@@ -10,26 +10,32 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 
-public class FileOpener {
+public class FileService {
 
     private JList<String> sharedFileList;
     private DefaultListModel<String> listModel;
-    private String serviceId;  // ID del servicio actual
+    private JList<String> operatorFileList;
+    private DefaultListModel<String> operatorListModel;
 
-    public FileOpener(JList<String> sharedFileList, String serviceId) {
+    private String serviceId;
+
+    public FileService(JList<String> sharedFileList, JList<String> operatorFileList, String serviceId) {
         this.sharedFileList = sharedFileList;
+        this.operatorFileList = operatorFileList;
         this.serviceId = serviceId;
         this.listModel = new DefaultListModel<>();
         sharedFileList.setModel(listModel);
+        this.operatorListModel = new DefaultListModel<>();
+        operatorFileList.setModel(operatorListModel);
 
-        loadFileList();
+        loadFileList(listModel, "services/" + serviceId + "/resources/");
+        loadFileList(operatorListModel, "services/" + serviceId + "/byOperator/");
     }
 
-    private void loadFileList() {
+    private void loadFileList(DefaultListModel<String> listModel, String folderPath) {
         try {
             Storage storage = FirebaseConfig.getStorage();
             String bucketName = "vd-logistics.firebasestorage.app";
-            String folderPath = "services/" + serviceId + "/";
 
             Bucket bucket = storage.get(bucketName);
             List<String> fileNames = new ArrayList<>();
@@ -54,7 +60,7 @@ public class FileOpener {
         }
     }
 
-    public static void openSelectedFile(JList fileList, String serviceId) {
+    public static void openSelectedFile(JList fileList, String folderPath) {
         String selectedFile = (String) fileList.getSelectedValue();
 
         if (selectedFile == null || selectedFile.isEmpty()) {
@@ -64,7 +70,8 @@ public class FileOpener {
 
         try {
             String bucketName = "vd-logistics.firebasestorage.app";
-            String filePathInBucket = "services/" + serviceId + "/" +  selectedFile;
+            //String filePathInBucket = "services/" + serviceId + "/" +  selectedFile;
+            String filePathInBucket = folderPath + selectedFile;
 
             Bucket bucket = StorageClient.getInstance().bucket(bucketName);
             Blob blob = bucket.get(filePathInBucket);

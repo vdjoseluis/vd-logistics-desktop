@@ -1,11 +1,14 @@
 package com.vdjoseluis.vdlogistics.ui;
 
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Storage;
+import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
 import com.vdjoseluis.vdlogistics.firebase.data.DataCustomer;
 import com.vdjoseluis.vdlogistics.firebase.data.DataIncident;
 import com.vdjoseluis.vdlogistics.firebase.data.DataLogs;
 import com.vdjoseluis.vdlogistics.firebase.data.DataService;
 import com.vdjoseluis.vdlogistics.firebase.data.DataUser;
-import com.vdjoseluis.vdlogistics.firebase.storage.FileOpener;
+import com.vdjoseluis.vdlogistics.firebase.storage.FileService;
 import com.vdjoseluis.vdlogistics.firebase.storage.FileUploader;
 import com.vdjoseluis.vdlogistics.models.Service;
 import com.vdjoseluis.vdlogistics.models.User;
@@ -13,6 +16,7 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
+import java.awt.HeadlessException;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +64,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         DataService.loadServices(confirmedTable, "Confirmado", loadingLabel, mainScrollPanel);
         DataService.loadServices(pendingTable, "Pendiente", loadingLabel, mainScrollPanel);
+        DataService.loadServices(completedTable, "Finalizado", loadingLabel, mainScrollPanel);
         DataService.loadServices(pendingCompletionTable, "Pendiente Finalización", loadingLabel, mainScrollPanel);
         DataService.loadServices(newDateTable, "Propuesta nueva fecha", loadingLabel, mainScrollPanel);
         DataUser.loadUsers(usersTable, loadingLabel, mainScrollPanel);
@@ -232,6 +237,10 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         newDateScrollPanel = new javax.swing.JScrollPane();
         newDateTable = new javax.swing.JTable();
+        completedServicesPanel = new BackgroundPanel();
+        completedScrollPanel = new javax.swing.JScrollPane();
+        completedTable = new javax.swing.JTable();
+        jLabel34 = new javax.swing.JLabel();
         usersPanel = new BackgroundPanel();
         usersScrollPanel = new javax.swing.JScrollPane();
         usersTable = new javax.swing.JTable();
@@ -311,13 +320,16 @@ public class MainFrame extends javax.swing.JFrame {
         serviceCommentsJSPanel = new javax.swing.JScrollPane();
         txtServiceComments = new javax.swing.JTextArea();
         jLabel29 = new javax.swing.JLabel();
-        addFileButton = new javax.swing.JButton();
         sharedFilesJSPanel = new javax.swing.JScrollPane();
         sharedFileList = new javax.swing.JList<>();
+        deleteFileButton = new javax.swing.JButton();
+        addFileButton = new javax.swing.JButton();
+        jLabel33 = new javax.swing.JLabel();
+        operatorFilesJSPanel = new javax.swing.JScrollPane();
+        operatorFileList = new javax.swing.JList<>();
         saveDiscardPanel1 = new javax.swing.JPanel();
         saveService = new javax.swing.JButton();
         discardService = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
         jMenuBar = new javax.swing.JMenuBar();
         usersMenu = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -327,6 +339,7 @@ public class MainFrame extends javax.swing.JFrame {
         jMenuItem4 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
         jMenuItem11 = new javax.swing.JMenuItem();
+        jMenuItem13 = new javax.swing.JMenuItem();
         incidentsMenu = new javax.swing.JMenu();
         jMenuItem6 = new javax.swing.JMenuItem();
         jMenuItem7 = new javax.swing.JMenuItem();
@@ -566,6 +579,58 @@ public class MainFrame extends javax.swing.JFrame {
 
         mainContent.add(otherServicesPanel, "otherServices");
 
+        completedServicesPanel.setBackground(new java.awt.Color(0, 153, 204));
+        completedServicesPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        completedServicesPanel.setLayout(new java.awt.GridBagLayout());
+
+        completedScrollPanel.setAutoscrolls(true);
+        completedScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        completedScrollPanel.setViewportView(completedTable);
+
+        completedTable.setAutoCreateRowSorter(true);
+        completedTable.setBackground(java.awt.SystemColor.control);
+        completedTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        completedTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        completedTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        completedTable.setFillsViewportHeight(true);
+        completedTable.setFocusable(false);
+        completedTable.setRowHeight(40);
+        completedTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        completedTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        completedTable.setShowGrid(true);
+        completedTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                completedTableMouseClicked(evt);
+            }
+        });
+        completedScrollPanel.setViewportView(completedTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 594;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 133, 114, 133);
+        completedServicesPanel.add(completedScrollPanel, gridBagConstraints);
+
+        jLabel34.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel34.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel34.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel34.setText("Servicios Finalizados");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.BASELINE;
+        gridBagConstraints.insets = new java.awt.Insets(30, 550, 0, 550);
+        completedServicesPanel.add(jLabel34, gridBagConstraints);
+
+        mainContent.add(completedServicesPanel, "completedServices");
+
         usersPanel.setBackground(new java.awt.Color(0, 153, 204));
         usersPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
         usersPanel.setLayout(new java.awt.GridBagLayout());
@@ -637,7 +702,7 @@ public class MainFrame extends javax.swing.JFrame {
         customersTable.setRowHeight(40);
         customersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         customersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        customersTable.setShowGrid(false);
+        customersTable.setShowGrid(true);
         customersScrollPanel.setViewportView(customersTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -743,7 +808,7 @@ public class MainFrame extends javax.swing.JFrame {
         pendingIncidentsTable.setRowHeight(40);
         pendingIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         pendingIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        pendingIncidentsTable.setShowGrid(false);
+        pendingIncidentsTable.setShowGrid(true);
         pendingIncidentsScrollPanel.setViewportView(pendingIncidentsTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -913,7 +978,7 @@ public class MainFrame extends javax.swing.JFrame {
         txtUserId.setForeground(new java.awt.Color(0, 0, 0));
         txtUserId.setDisabledTextColor(new java.awt.Color(153, 153, 153));
         txtUserId.setEnabled(false);
-        formUsersPanel.add(txtUserId, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 120, 200, 30));
+        formUsersPanel.add(txtUserId, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 120, 230, 30));
 
         jLabel11.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel11.setForeground(new java.awt.Color(255, 255, 255));
@@ -1038,13 +1103,19 @@ public class MainFrame extends javax.swing.JFrame {
         formServicesPanel.setBackground(new java.awt.Color(0, 153, 204));
         formServicesPanel.setAutoscrolls(true);
         formServicesPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
-        formServicesPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+        formServicesPanel.setLayout(new java.awt.GridBagLayout());
 
         jLabel20.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
         jLabel20.setForeground(new java.awt.Color(255, 255, 255));
         jLabel20.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel20.setText("Formulario de Servicios - VD Logistics");
-        formServicesPanel.add(jLabel20, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 40, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 14;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(40, 310, 0, 0);
+        formServicesPanel.add(jLabel20, gridBagConstraints);
 
         opServices.setBackground(new java.awt.Color(0, 153, 153));
         opServices.setAlignmentX(0.0F);
@@ -1154,130 +1225,271 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(48, 48, 48)
                 .addComponent(backServices, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(578, Short.MAX_VALUE))
+                .addContainerGap(226, Short.MAX_VALUE))
         );
 
-        formServicesPanel.add(opServices, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 23;
+        gridBagConstraints.ipadx = 20;
+        gridBagConstraints.ipady = 566;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 10, 0);
+        formServicesPanel.add(opServices, gridBagConstraints);
 
         jLabel23.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel23.setForeground(new java.awt.Color(255, 255, 255));
         jLabel23.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel23.setText("Fecha / Hora:");
-        formServicesPanel.add(jLabel23, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 105, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(36, 300, 0, 0);
+        formServicesPanel.add(jLabel23, gridBagConstraints);
 
         dcServiceDate.setBackground(new java.awt.Color(255, 255, 255));
         dcServiceDate.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        formServicesPanel.add(dcServiceDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 100, 140, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 113;
+        gridBagConstraints.ipady = 11;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(31, 60, 0, 0);
+        formServicesPanel.add(dcServiceDate, gridBagConstraints);
 
         jLabel31.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 24)); // NOI18N
         jLabel31.setForeground(new java.awt.Color(255, 255, 255));
         jLabel31.setText("/");
-        formServicesPanel.add(jLabel31, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 100, 10, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 11;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(31, 30, 0, 0);
+        formServicesPanel.add(jLabel31, gridBagConstraints);
 
         spServiceHour.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         spServiceHour.setModel(new SpinnerNumberModel(8, 8, 20, 1));
         spServiceHour.setEditor(new JSpinner.NumberEditor(spServiceHour, "00"));
-        formServicesPanel.add(spServiceHour, new org.netbeans.lib.awtextra.AbsoluteConstraints(970, 100, 50, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 12;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 22;
+        gridBagConstraints.ipady = 10;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(31, 30, 0, 0);
+        formServicesPanel.add(spServiceHour, gridBagConstraints);
 
         jLabel30.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 24)); // NOI18N
         jLabel30.setForeground(new java.awt.Color(255, 255, 255));
         jLabel30.setText(":");
-        formServicesPanel.add(jLabel30, new org.netbeans.lib.awtextra.AbsoluteConstraints(1030, 100, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 13;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(31, 10, 0, 0);
+        formServicesPanel.add(jLabel30, gridBagConstraints);
 
         spServiceMinute.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         spServiceMinute.setModel(new SpinnerNumberModel(0, 0, 59, 1));
         spServiceMinute.setEditor(new JSpinner.NumberEditor(spServiceMinute, "00"));
-        formServicesPanel.add(spServiceMinute, new org.netbeans.lib.awtextra.AbsoluteConstraints(1050, 100, 50, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 23;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 24;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 22;
+        gridBagConstraints.ipady = 10;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(31, 9, 0, 0);
+        formServicesPanel.add(spServiceMinute, gridBagConstraints);
 
         jLabel27.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel27.setForeground(new java.awt.Color(255, 255, 255));
         jLabel27.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel27.setText("Descripción:");
-        formServicesPanel.add(jLabel27, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 165, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(25, 310, 0, 0);
+        formServicesPanel.add(jLabel27, gridBagConstraints);
 
         txtServiceDescription.setColumns(20);
         txtServiceDescription.setRows(5);
         serviceDescriptionJSPanel.setViewportView(txtServiceDescription);
 
-        formServicesPanel.add(serviceDescriptionJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 160, 340, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 38;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.ipadx = 398;
+        gridBagConstraints.ipady = 56;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 186);
+        formServicesPanel.add(serviceDescriptionJSPanel, gridBagConstraints);
 
         jLabel24.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel24.setForeground(new java.awt.Color(255, 255, 255));
         jLabel24.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel24.setText("Operario:");
-        formServicesPanel.add(jLabel24, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 275, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(25, 330, 0, 0);
+        formServicesPanel.add(jLabel24, gridBagConstraints);
 
         cmbServiceOperator.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceOperator.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        formServicesPanel.add(cmbServiceOperator, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 270, 340, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 30;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 20;
+        gridBagConstraints.ipady = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 0);
+        formServicesPanel.add(cmbServiceOperator, gridBagConstraints);
 
         jLabel25.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel25.setForeground(new java.awt.Color(255, 255, 255));
         jLabel25.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel25.setText("Tipo de servicio:");
         jLabel25.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        formServicesPanel.add(jLabel25, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 335, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(25, 280, 0, 0);
+        formServicesPanel.add(jLabel25, gridBagConstraints);
 
         cmbServiceType.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceType.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         cmbServiceType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Medición", "Transporte", "Montaje" }));
-        formServicesPanel.add(cmbServiceType, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 330, 180, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 20;
+        gridBagConstraints.ipady = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 0);
+        formServicesPanel.add(cmbServiceType, gridBagConstraints);
 
         jLabel28.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel28.setForeground(new java.awt.Color(255, 255, 255));
         jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel28.setText("Cliente:");
         jLabel28.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        formServicesPanel.add(jLabel28, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 395, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(25, 350, 0, 0);
+        formServicesPanel.add(jLabel28, gridBagConstraints);
 
         cmbServiceCustomer.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        formServicesPanel.add(cmbServiceCustomer, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 390, 340, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridwidth = 30;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 20;
+        gridBagConstraints.ipady = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 0);
+        formServicesPanel.add(cmbServiceCustomer, gridBagConstraints);
 
         jLabel26.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel26.setForeground(new java.awt.Color(255, 255, 255));
         jLabel26.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel26.setText("Estado:");
         jLabel26.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        formServicesPanel.add(jLabel26, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 455, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridwidth = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(25, 350, 0, 0);
+        formServicesPanel.add(jLabel26, gridBagConstraints);
 
         cmbServiceStatus.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceStatus.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         cmbServiceStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Pendiente", "Confirmado", "Incidencia", "Finalizado", "Pendiente Finalización", "Propuesta nueva fecha", " " }));
-        formServicesPanel.add(cmbServiceStatus, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 450, 180, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 20;
+        gridBagConstraints.ipady = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 0);
+        formServicesPanel.add(cmbServiceStatus, gridBagConstraints);
 
         jLabel32.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel32.setForeground(new java.awt.Color(255, 255, 255));
         jLabel32.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel32.setText("Comentarios:");
         jLabel32.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        formServicesPanel.add(jLabel32, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 515, -1, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridwidth = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(25, 310, 0, 0);
+        formServicesPanel.add(jLabel32, gridBagConstraints);
 
         txtServiceComments.setColumns(20);
         txtServiceComments.setRows(4);
-        txtServiceComments.setPreferredSize(new java.awt.Dimension(160, 60));
         serviceCommentsJSPanel.setViewportView(txtServiceComments);
 
-        formServicesPanel.add(serviceCommentsJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 510, 340, -1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridwidth = 38;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.ipadx = 398;
+        gridBagConstraints.ipady = 56;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 186);
+        formServicesPanel.add(serviceCommentsJSPanel, gridBagConstraints);
 
         jLabel29.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel29.setForeground(new java.awt.Color(255, 255, 255));
         jLabel29.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel29.setText("Archivos adjuntos:");
         jLabel29.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        formServicesPanel.add(jLabel29, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 610, -1, -1));
-
-        addFileButton.setBackground(new java.awt.Color(3, 121, 157));
-        addFileButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
-        addFileButton.setForeground(new java.awt.Color(255, 255, 255));
-        addFileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/54719.png"))); // NOI18N
-        addFileButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        addFileButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addFileButtonActionPerformed(evt);
-            }
-        });
-        formServicesPanel.add(addFileButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 640, 30, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 16;
+        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(25, 270, 0, 0);
+        formServicesPanel.add(jLabel29, gridBagConstraints);
 
         sharedFilesJSPanel.setPreferredSize(new java.awt.Dimension(280, 60));
 
@@ -1289,7 +1501,92 @@ public class MainFrame extends javax.swing.JFrame {
         });
         sharedFilesJSPanel.setViewportView(sharedFileList);
 
-        formServicesPanel.add(sharedFilesJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 610, 340, 80));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 16;
+        gridBagConstraints.gridwidth = 38;
+        gridBagConstraints.gridheight = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.ipadx = 398;
+        gridBagConstraints.ipady = 58;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 186);
+        formServicesPanel.add(sharedFilesJSPanel, gridBagConstraints);
+
+        deleteFileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/delete-filled.png"))); // NOI18N
+        deleteFileButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        deleteFileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteFileButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 17;
+        gridBagConstraints.ipadx = 4;
+        gridBagConstraints.ipady = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 330, 0, 0);
+        formServicesPanel.add(deleteFileButton, gridBagConstraints);
+
+        addFileButton.setBackground(new java.awt.Color(3, 121, 157));
+        addFileButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        addFileButton.setForeground(new java.awt.Color(255, 255, 255));
+        addFileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/54719.png"))); // NOI18N
+        addFileButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        addFileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addFileButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 17;
+        gridBagConstraints.gridwidth = 8;
+        gridBagConstraints.ipadx = 4;
+        gridBagConstraints.ipady = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 30, 0, 0);
+        formServicesPanel.add(addFileButton, gridBagConstraints);
+
+        jLabel33.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel33.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel33.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel33.setText("Archivos adjuntos:");
+        jLabel33.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 19;
+        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(25, 270, 0, 0);
+        formServicesPanel.add(jLabel33, gridBagConstraints);
+
+        operatorFilesJSPanel.setPreferredSize(new java.awt.Dimension(280, 60));
+
+        operatorFileList.setPreferredSize(new java.awt.Dimension(30, 60));
+        operatorFileList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                operatorFileListMouseClicked(evt);
+            }
+        });
+        operatorFilesJSPanel.setViewportView(operatorFileList);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridy = 19;
+        gridBagConstraints.gridwidth = 38;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.ipadx = 398;
+        gridBagConstraints.ipady = 58;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 186);
+        formServicesPanel.add(operatorFilesJSPanel, gridBagConstraints);
 
         saveDiscardPanel1.setBackground(new java.awt.Color(0, 153, 153));
         saveDiscardPanel1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -1337,8 +1634,15 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap(32, Short.MAX_VALUE))
         );
 
-        formServicesPanel.add(saveDiscardPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 720, 500, 110));
-        formServicesPanel.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(1120, 610, 30, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 21;
+        gridBagConstraints.gridwidth = 23;
+        gridBagConstraints.ipadx = 116;
+        gridBagConstraints.ipady = 20;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(20, 290, 20, 0);
+        formServicesPanel.add(saveDiscardPanel1, gridBagConstraints);
 
         mainContent.add(formServicesPanel, "formServices");
 
@@ -1397,6 +1701,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         servicesMenu.add(jMenuItem11);
+
+        jMenuItem13.setText("Servicios Finalizados");
+        jMenuItem13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem13ActionPerformed(evt);
+            }
+        });
+        servicesMenu.add(jMenuItem13);
 
         jMenuBar.add(servicesMenu);
 
@@ -1680,7 +1992,7 @@ public class MainFrame extends javax.swing.JFrame {
             String serviceId = confirmedTable.getValueAt(selectedRow, 0).toString();
             Service serviceData = DataService.getServiceById(serviceId);
             if (serviceData != null) {
-                FileOpener fileOpener = new FileOpener(sharedFileList, serviceId);
+                FileService fileOpener = new FileService(sharedFileList, operatorFileList, serviceId);
                 navigateCard("formServices");
                 updateServiceButton.setEnabled(false);
                 showServiceForm(serviceData);
@@ -1745,7 +2057,8 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void sharedFileListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sharedFileListMouseClicked
         if (evt.getClickCount() == 2) {
-            FileOpener.openSelectedFile(sharedFileList, txtServiceId.getText());
+            String folderPath = "services/" + txtServiceId.getText() + "/resources/";
+            FileService.openSelectedFile(sharedFileList, folderPath);
         }
     }//GEN-LAST:event_sharedFileListMouseClicked
 
@@ -1759,12 +2072,12 @@ public class MainFrame extends javax.swing.JFrame {
             for (File selectedFile : selectedFiles) {
                 String fileName = selectedFile.getName();
 
-                String storagePath = "services/" + serviceId + "/" + fileName;
+                String storagePath = "services/" + serviceId + "/resources/" + fileName;
 
                 try {
                     FileUploader.uploadFile(selectedFile, storagePath);
-                    FileOpener fileOpener = new FileOpener(sharedFileList, serviceId);
-                    System.out.println("Archivo subido exitosamente a: " + storagePath); 
+                    FileService fileOpener = new FileService(sharedFileList, operatorFileList, serviceId);
+                    System.out.println("Archivo subido exitosamente a: " + storagePath);
                 } catch (IOException e) {
                     JOptionPane.showMessageDialog(this, "Error al subir el archivo " + fileName + ": " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     e.printStackTrace();
@@ -1775,6 +2088,71 @@ public class MainFrame extends javax.swing.JFrame {
 
         }
     }//GEN-LAST:event_addFileButtonActionPerformed
+
+    private void operatorFileListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_operatorFileListMouseClicked
+        if (evt.getClickCount() == 2) {
+            String folderPath = "services/" + txtServiceId.getText() + "/byOperator/";
+            FileService.openSelectedFile(operatorFileList, folderPath);
+        }
+    }//GEN-LAST:event_operatorFileListMouseClicked
+
+    private void deleteFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteFileButtonActionPerformed
+        String selectedFile = sharedFileList.getSelectedValue();
+
+        if (selectedFile == null || selectedFile.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No has seleccionado ningún archivo.", "VD Logistics", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(null, "¿Seguro que quieres eliminar este archivo?",
+                "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            deleteFileFromStorage(selectedFile, txtServiceId.getText());
+        }
+    }//GEN-LAST:event_deleteFileButtonActionPerformed
+
+    private void completedTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_completedTableMouseClicked
+        int selectedRow = completedTable.getSelectedRow();
+        if (selectedRow != -1 && completedTable.getValueAt(selectedRow, 1) != "No hay servicios") {
+            String serviceId = completedTable.getValueAt(selectedRow, 0).toString();
+            Service serviceData = DataService.getServiceById(serviceId);
+            if (serviceData != null) {
+                navigateCard("formServices");
+                updateServiceButton.setEnabled(false);
+                showServiceForm(serviceData);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario", "VD Logistics", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_completedTableMouseClicked
+
+    private void jMenuItem13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem13ActionPerformed
+        navigateCard("completedServices");
+    }//GEN-LAST:event_jMenuItem13ActionPerformed
+
+    private void deleteFileFromStorage(String fileName, String serviceId) {
+        try {
+            String bucketName = "vd-logistics.firebasestorage.app";
+            String filePathInBucket = "services/" + serviceId + "/resources/" + fileName;
+
+            Storage storage = FirebaseConfig.getStorage();
+            Blob blob = storage.get(bucketName).get(filePathInBucket);
+
+            if (blob == null) {
+                JOptionPane.showMessageDialog(null, "El archivo no existe en Firebase Storage.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            blob.delete();
+            JOptionPane.showMessageDialog(null, "Archivo eliminado correctamente.", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+
+            new FileService(sharedFileList, operatorFileList, serviceId);
+
+        } catch (HeadlessException e) {
+            JOptionPane.showMessageDialog(null, "Error al eliminar archivo: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -1820,6 +2198,9 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cmbServiceStatus;
     private javax.swing.JComboBox<String> cmbServiceType;
     private javax.swing.JComboBox<String> comboUserType;
+    private javax.swing.JScrollPane completedScrollPanel;
+    private javax.swing.JPanel completedServicesPanel;
+    private javax.swing.JTable completedTable;
     private javax.swing.JScrollPane confirmedScrollPanel;
     private javax.swing.JTable confirmedTable;
     private javax.swing.JButton createServiceButton;
@@ -1830,6 +2211,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane customersScrollPanel;
     private javax.swing.JTable customersTable;
     private com.toedter.calendar.JDateChooser dcServiceDate;
+    private javax.swing.JButton deleteFileButton;
     private javax.swing.JButton deleteServiceButton;
     private javax.swing.JButton deleteUserButton;
     private javax.swing.JButton discardService;
@@ -1838,7 +2220,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel formUsersPanel;
     private javax.swing.JMenu incidentsMenu;
     private javax.swing.JPanel incidentsPanel;
-    private javax.swing.JButton jButton1;
     private javax.swing.JFileChooser jFileChooser;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -1866,6 +2247,8 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel31;
     private javax.swing.JLabel jLabel32;
+    private javax.swing.JLabel jLabel33;
+    private javax.swing.JLabel jLabel34;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -1877,6 +2260,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem10;
     private javax.swing.JMenuItem jMenuItem11;
     private javax.swing.JMenuItem jMenuItem12;
+    private javax.swing.JMenuItem jMenuItem13;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -1897,6 +2281,8 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTable newDateTable;
     private javax.swing.JPanel opServices;
     private javax.swing.JPanel opUsers;
+    private javax.swing.JList<String> operatorFileList;
+    private javax.swing.JScrollPane operatorFilesJSPanel;
     private javax.swing.JPanel otherServicesPanel;
     private javax.swing.JScrollPane pendingCompletionScrollPanel;
     private javax.swing.JTable pendingCompletionTable;
