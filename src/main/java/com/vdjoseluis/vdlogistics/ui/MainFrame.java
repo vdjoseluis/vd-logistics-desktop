@@ -21,9 +21,12 @@ import java.awt.HeadlessException;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -44,6 +47,8 @@ public class MainFrame extends javax.swing.JFrame {
 
     BackgroundPanel background = new BackgroundPanel();
     private final String userEmail;
+    private final DefaultListModel<String> tempListModel = new DefaultListModel<>();
+    private final List<File> tempFiles = new ArrayList<>();
 
     public MainFrame(String email) {
         this.setContentPane(background);
@@ -131,6 +136,9 @@ public class MainFrame extends javax.swing.JFrame {
         dcServiceDate.setDate(calendar.getTime());
         spServiceHour.setValue(8);
         spServiceMinute.setValue(0);
+
+        tempFiles.clear();
+        tempListModel.clear();
     }
 
     private void createUser() {
@@ -171,6 +179,7 @@ public class MainFrame extends javax.swing.JFrame {
     private void showServiceForm(Service serviceData, boolean incident) {
         newIncidentFromServiceButton.setEnabled(false);
         txtServiceId.setText(serviceData.getId());
+        FileService fileOpener = new FileService(sharedFileList, operatorFileList, serviceData.getId());
         Date serviceDate = serviceData.getDate();
         if (serviceDate != null) {
             Calendar calendar = Calendar.getInstance();
@@ -192,6 +201,24 @@ public class MainFrame extends javax.swing.JFrame {
         newIncidentFromServiceButton.setEnabled(!incident);
     }
 
+    private void uploadFromTempFiles(String serviceId) {
+        for (File selectedFile : tempFiles) {
+            String fileName = selectedFile.getName();
+
+            String storagePath = "services/" + serviceId + "/resources/" + fileName;
+
+            try {
+                FileUploader.uploadFile(selectedFile, storagePath);
+                System.out.println("Archivo subido exitosamente a: " + storagePath);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error al subir el archivo " + fileName + ": " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+        tempFiles.clear();
+        tempListModel.clear();
+    }
+
     private void saveService(String action) {
         String id = ("update".equals(action)) ? txtServiceId.getText() : null;
         Date date = dcServiceDate.getDate();
@@ -203,7 +230,6 @@ public class MainFrame extends javax.swing.JFrame {
         String comments = txtServiceComments.getText();
 
         String incidentId = incidentIdToService.getText();
-        System.out.println(incidentId);
 
         if (description.isEmpty() || date == null) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "VD Logistics", JOptionPane.WARNING_MESSAGE);
@@ -215,20 +241,23 @@ public class MainFrame extends javax.swing.JFrame {
         boolean successIncident = false;
 
         if ("new".equals(action)) {
-            success = DataService.createService(newService, userEmail, dcServiceDate, spServiceHour, spServiceMinute);
+            id = DataService.createService(newService, userEmail, dcServiceDate, spServiceHour, spServiceMinute);
             if (txtServiceDescription.getText().startsWith("Incidencia")) {
                 successIncident = DataIncident.updateIncidentStatusById(incidentId, userEmail);
             }
         } else if ("update".equals(action)) {
-            success = DataService.updateService(newService, userEmail, dcServiceDate, spServiceHour, spServiceMinute);
+            id = DataService.updateService(newService, userEmail, dcServiceDate, spServiceHour, spServiceMinute);
         }
+        success = id != null;
 
-        if (success) {
-            JOptionPane.showMessageDialog(this, "Registrado correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+        if (success && successIncident) {
+            uploadFromTempFiles(id);
+            JOptionPane.showMessageDialog(this, "Incidencia tramitada correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
             clearForm(formServicesPanel);
             navigateCard("services");
-        } else if (success && successIncident) {
-            JOptionPane.showMessageDialog(this, "Incidencia tramitada correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+        } else if (success) {
+            uploadFromTempFiles(id);
+            JOptionPane.showMessageDialog(this, "Registrado correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
             clearForm(formServicesPanel);
             navigateCard("services");
         } else {
@@ -2436,23 +2465,16 @@ public class MainFrame extends javax.swing.JFrame {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] selectedFiles = jFileChooser.getSelectedFiles();
 
-            String serviceId = txtServiceId.getText();
-
             for (File selectedFile : selectedFiles) {
                 String fileName = selectedFile.getName();
 
-                String storagePath = "services/" + serviceId + "/resources/" + fileName;
-
-                try {
-                    FileUploader.uploadFile(selectedFile, storagePath);
-                    FileService fileOpener = new FileService(sharedFileList, operatorFileList, serviceId);
-                    System.out.println("Archivo subido exitosamente a: " + storagePath);
-                } catch (IOException e) {
-                    JOptionPane.showMessageDialog(this, "Error al subir el archivo " + fileName + ": " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                    e.printStackTrace();
-                }
+                // Agregar a la lista temporal
+                tempFiles.add(selectedFile);
+                tempListModel.addElement(fileName);
             }
-            JOptionPane.showMessageDialog(this, "Archivos subidos correctamente.", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+
+            // Actualizar JList con los archivos temporales
+            sharedFileList.setModel(tempListModel);
         }
     }//GEN-LAST:event_addFileButtonActionPerformed
 
@@ -2646,40 +2668,7 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
-    /**
-     * @param args the command line arguments
-     */
-//    public static void main(String args[]) {
-//        /* Set the Nimbus look and feel */
-//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-//         */
-//        try {
-//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-//                if ("Nimbus".equals(info.getName())) {
-//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-//                    break;
-//                }
-//            }
-//        } catch (ClassNotFoundException ex) {
-//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (InstantiationException ex) {
-//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (IllegalAccessException ex) {
-//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-//            java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//        }
-//        //</editor-fold>
-//
-//        /* Create and display the form */
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                new MainFrame("vdjoseluis@outlook.com").setVisible(true);
-//            }
-//        });
-//    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addFileButton;

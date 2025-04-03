@@ -89,4 +89,30 @@ public class FileService {
             JOptionPane.showMessageDialog(null, "Error al abrir el archivo: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    public static void deleteServiceFiles(String serviceId) {
+        try {
+            Storage storage = FirebaseConfig.getStorage();
+            String bucketName = "vd-logistics.firebasestorage.app";
+            String folderPath = "services/" + serviceId + "/";
+
+            Bucket bucket = storage.get(bucketName);
+
+            List<Blob> blobs = new ArrayList<>();
+            for (Blob blob : bucket.list(Storage.BlobListOption.prefix(folderPath)).iterateAll()) {
+                blobs.add(blob);
+            }
+
+            if (!blobs.isEmpty()) {
+                storage.delete(blobs.stream().map(Blob::getBlobId).toArray(BlobId[]::new));
+                System.out.println("✅ Archivos de " + folderPath + " eliminados correctamente.");
+            } else {
+                System.out.println("ℹ No hay archivos en la carpeta: " + folderPath);
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Error eliminando archivos del servicio: " + e.getMessage());
+        }
+    }
+
 }

@@ -4,6 +4,7 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.toedter.calendar.JDateChooser;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
+import com.vdjoseluis.vdlogistics.firebase.storage.FileService;
 import com.vdjoseluis.vdlogistics.models.Service;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -122,7 +123,7 @@ public class DataService {
             String address = doc.getString("address");
             if (address != null && address.contains(",")) {
                 String[] parts = address.split(",");
-                return parts[parts.length - 1].trim();  // Última parte después de la última coma
+                return parts[parts.length - 1].trim();  
             }
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
@@ -157,7 +158,7 @@ public class DataService {
         return null;
     }
 
-    public static boolean createService(Service service, String userEmail, JDateChooser date, JSpinner hour, JSpinner minutes) {
+    public static String createService(Service service, String userEmail, JDateChooser date, JSpinner hour, JSpinner minutes) {
         try {
             DocumentReference docRef = db.collection("services").document();
             
@@ -177,14 +178,14 @@ public class DataService {
             DataLog.registerLog(userEmail, "Añade servicio", docRef.getId());
 
             System.out.println("✅ Servicio creado correctamente ");
-            return true;
+            return docRef.getId();
         } catch (Exception e) {
             System.err.println("❌ Error creando servicio: " + e.getMessage());
-            return false;
+            return null;
         }
     }
     
-    public static boolean updateService(Service service, String userEmail, JDateChooser date, JSpinner hour, JSpinner minutes) {
+    public static String updateService(Service service, String userEmail, JDateChooser date, JSpinner hour, JSpinner minutes) {
         try {
             DocumentReference docRef = db.collection("services").document(service.getId());
             
@@ -204,10 +205,10 @@ public class DataService {
             DataLog.registerLog(userEmail, "Actualiza servicio", docRef.getId());
 
             System.out.println("✅ Servicio actualizado correctamente ");
-            return true;
+            return docRef.getId();
         } catch (InterruptedException | ExecutionException e) {
             System.err.println("❌ Error creando servicio: " + e.getMessage());
-            return false;
+            return null;
         }
     }
     
@@ -232,6 +233,7 @@ public class DataService {
     public static boolean deleteService(String userEmail, String serviceId) {
         try {
             db.collection("services").document(serviceId).delete().get();
+            FileService.deleteServiceFiles(serviceId);
             DataLog.registerLog(userEmail, "Elimina servicio", serviceId);
             System.out.println("Servicio eliminado correctamente");
             return true;

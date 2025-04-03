@@ -2,9 +2,7 @@ package com.vdjoseluis.vdlogistics.firebase.data;
 
 import com.google.cloud.firestore.*;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
