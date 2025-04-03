@@ -1,9 +1,13 @@
 package com.vdjoseluis.vdlogistics.firebase.data;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
+import com.vdjoseluis.vdlogistics.models.Incident;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -52,7 +56,7 @@ public class DataIncident {
             DefaultTableModel model = new DefaultTableModel(COLUMN_NAMES, 0) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
-                    return false; 
+                    return false;
                 }
             };
 
@@ -68,7 +72,7 @@ public class DataIncident {
                     String service = (serviceRef != null) ? serviceRef.getId() : "Sin servicio";
 
                     String incidentDescription = document.getString("description");
-                    
+
                     model.addRow(new Object[]{
                         incidentId,
                         incidentDate,
@@ -90,7 +94,7 @@ public class DataIncident {
         });
     }
 
-    private static String getFormattedDate(Date date) {
+    public static String getFormattedDate(Date date) {
         SimpleDateFormat formatDate = new SimpleDateFormat("dd-MM-yyyy   /  HH:mm");
         return formatDate.format(date);
     }
@@ -106,4 +110,108 @@ public class DataIncident {
             return "Desconocido";
         }
     }
+
+    public static Incident getIncidentById(String incidentId) {
+        try {
+            DocumentSnapshot doc = db.collection("incidents").document(incidentId).get().get();
+
+            if (doc.exists()) {
+                String id = doc.getId();
+                Date date = doc.getTimestamp("date").toDate();
+
+                DocumentReference operatorRef = (DocumentReference) doc.get("refOperator");
+                String operator = (operatorRef != null) ? getFullName(operatorRef) : "Sin operario";
+
+                String description = doc.getString("description");
+
+                DocumentReference serviceRef = (DocumentReference) doc.get("refService");
+                String service = (serviceRef != null) ? serviceRef.getId() : "Sin servicio";
+
+                String status = doc.getString("status");
+
+                return new Incident(id, date, operator, description, service, status);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error al obtener servicio: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public static boolean createIncident(Incident incident, String userEmail) {
+        try {
+            DocumentReference docRef = db.collection("incidents").document();
+
+            String operatorId = DataUser.operatorMap.get(incident.getOperator());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("date", Timestamp.now());
+            data.put("description", incident.getDescription());
+            data.put("refOperator", db.collection("users").document(operatorId));
+            data.put("refService", db.collection("services").document(incident.getService()));
+            data.put("status", incident.getStatus());
+
+            docRef.set(data);
+            DataLog.registerLog(userEmail, "Crea incidencia", docRef.getId());
+
+            System.out.println("✅ Incidencia registrada correctamente ");
+            return true;
+        } catch (Exception e) {
+            System.err.println("❌ Error creando incidencia: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean updateIncident(Incident incident, String userEmail) {
+        try {
+            DocumentReference docRef = db.collection("incidents").document(incident.getId());
+
+            String operatorId = DataUser.operatorMap.get(incident.getOperator());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("description", incident.getDescription());
+            data.put("refOperator", db.collection("users").document(operatorId));
+            data.put("refService", db.collection("services").document(incident.getService()));
+            data.put("status", incident.getStatus());
+
+            docRef.update(data).get();
+            DataLog.registerLog(userEmail, "Actualiza incidencia", docRef.getId());
+
+            System.out.println("✅ Incidencia actualizada correctamente ");
+            return true;
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error creando incidencia: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    public static boolean updateIncidentStatusById(String id, String userEmail) {
+        try {
+            DocumentReference docRef = db.collection("incidents").document(id);
+
+            Map<String, Object> data = new HashMap<>();            
+            data.put("status", "Tramitada");
+
+            docRef.update(data).get();
+            DataLog.registerLog(userEmail, "Tramita incidencia", docRef.getId());
+
+            System.out.println("✅ Incidencia actualizada correctamente ");
+            return true;
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error creando incidencia: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean deleteIncident(String userEmail, String incidentId) {
+        try {
+            db.collection("incidents").document(incidentId).delete().get();
+            DataLog.registerLog(userEmail, "Elimina incidencia", incidentId);
+            System.out.println("Incidencia eliminada correctamente");
+            return true;
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("Error al eliminar incidencia: " + e.getMessage());
+            return false;
+        }
+    }
+
 }

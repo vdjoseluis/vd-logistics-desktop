@@ -5,11 +5,12 @@ import com.google.cloud.storage.Storage;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
 import com.vdjoseluis.vdlogistics.firebase.data.DataCustomer;
 import com.vdjoseluis.vdlogistics.firebase.data.DataIncident;
-import com.vdjoseluis.vdlogistics.firebase.data.DataLogs;
+import com.vdjoseluis.vdlogistics.firebase.data.DataLog;
 import com.vdjoseluis.vdlogistics.firebase.data.DataService;
 import com.vdjoseluis.vdlogistics.firebase.data.DataUser;
 import com.vdjoseluis.vdlogistics.firebase.storage.FileService;
 import com.vdjoseluis.vdlogistics.firebase.storage.FileUploader;
+import com.vdjoseluis.vdlogistics.models.Incident;
 import com.vdjoseluis.vdlogistics.models.Service;
 import com.vdjoseluis.vdlogistics.models.User;
 import java.awt.CardLayout;
@@ -49,6 +50,8 @@ public class MainFrame extends javax.swing.JFrame {
 
         initComponents();
 
+        incidentIdToService.setVisible(false);
+
         userEmail = email;
         User currentUser = DataUser.getCurrentUser(email);
         if (currentUser != null) {
@@ -69,7 +72,7 @@ public class MainFrame extends javax.swing.JFrame {
         DataService.loadServices(newDateTable, "Propuesta nueva fecha", loadingLabel, mainScrollPanel);
         DataUser.loadUsers(usersTable, loadingLabel, mainScrollPanel);
         DataCustomer.loadCustomers(customersTable, loadingLabel, mainScrollPanel);
-        DataLogs.loadLogs(logsTable, loadingLabel, mainScrollPanel);
+        DataLog.loadLogs(logsTable, loadingLabel, mainScrollPanel);
         DataIncident.loadIncidents(pendingIncidentsTable, "Pendiente", loadingLabel, mainScrollPanel);
         DataIncident.loadIncidents(processedIncidentsTable, "Tramitada", loadingLabel, mainScrollPanel);
     }
@@ -87,6 +90,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void fillComboBoxes() {
         DataUser.listenForOperatorNames(cmbServiceOperator);
+        DataUser.listenForOperatorNames(cmbIncidentOperator);
         DataCustomer.listenForCustomerNames(cmbServiceCustomer);
     }
 
@@ -97,6 +101,10 @@ public class MainFrame extends javax.swing.JFrame {
         createServiceButton.setEnabled(true);
         updateServiceButton.setEnabled(true);
         deleteServiceButton.setEnabled(true);
+        newIncidentFromServiceButton.setEnabled(true);
+        createIncidentButton.setEnabled(true);
+        updateIncidentButton.setEnabled(true);
+        deleteIncidentButton.setEnabled(true);
     }
 
     private void clearForm(JPanel panel) {
@@ -105,6 +113,7 @@ public class MainFrame extends javax.swing.JFrame {
                 ((JTextField) component).setText("");
             } else if (component instanceof JComboBox) {
                 ((JComboBox<?>) component).setSelectedIndex(0);
+                ((JComboBox<?>) component).setEnabled(true);
             } else if (component instanceof JPasswordField) {
                 ((JPasswordField) component).setText("");
             }
@@ -113,7 +122,9 @@ public class MainFrame extends javax.swing.JFrame {
         txtUserPassword.setEnabled(true);
 
         txtServiceDescription.setText("");
+        txtServiceDescription.setEditable(true);
         txtServiceComments.setText("");
+        txtIncidentDescription.setText("");
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, 1);
@@ -157,7 +168,8 @@ public class MainFrame extends javax.swing.JFrame {
         comboUserType.setSelectedItem(userData.get("type"));
     }
 
-    private void showServiceForm(Service serviceData) {
+    private void showServiceForm(Service serviceData, boolean incident) {
+        newIncidentFromServiceButton.setEnabled(false);
         txtServiceId.setText(serviceData.getId());
         Date serviceDate = serviceData.getDate();
         if (serviceDate != null) {
@@ -169,11 +181,15 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         txtServiceDescription.setText(serviceData.getDescription());
+        txtServiceDescription.setEditable(!incident);
         cmbServiceOperator.setSelectedItem(serviceData.getOperator());
         cmbServiceType.setSelectedItem(serviceData.getType());
         cmbServiceCustomer.setSelectedItem(serviceData.getCustomer());
+        cmbServiceCustomer.setEnabled(!incident);
         cmbServiceStatus.setSelectedItem(serviceData.getStatus());
         txtServiceComments.setText(serviceData.getComments());
+
+        newIncidentFromServiceButton.setEnabled(!incident);
     }
 
     private void saveService(String action) {
@@ -186,6 +202,9 @@ public class MainFrame extends javax.swing.JFrame {
         String status = ("update".equals(action)) ? (String) cmbServiceStatus.getSelectedItem() : "Pendiente";
         String comments = txtServiceComments.getText();
 
+        String incidentId = incidentIdToService.getText();
+        System.out.println(incidentId);
+
         if (description.isEmpty() || date == null) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "VD Logistics", JOptionPane.WARNING_MESSAGE);
             return;
@@ -193,9 +212,13 @@ public class MainFrame extends javax.swing.JFrame {
 
         Service newService = new Service(id, date, operatorName, type, customerName, status, description, comments);
         boolean success = false;
+        boolean successIncident = false;
 
         if ("new".equals(action)) {
             success = DataService.createService(newService, userEmail, dcServiceDate, spServiceHour, spServiceMinute);
+            if (txtServiceDescription.getText().startsWith("Incidencia")) {
+                successIncident = DataIncident.updateIncidentStatusById(incidentId, userEmail);
+            }
         } else if ("update".equals(action)) {
             success = DataService.updateService(newService, userEmail, dcServiceDate, spServiceHour, spServiceMinute);
         }
@@ -204,8 +227,58 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Registrado correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
             clearForm(formServicesPanel);
             navigateCard("services");
+        } else if (success && successIncident) {
+            JOptionPane.showMessageDialog(this, "Incidencia tramitada correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+            clearForm(formServicesPanel);
+            navigateCard("services");
         } else {
             JOptionPane.showMessageDialog(this, "Error al registrar servicio.", "VD Logistics", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void showIncidentForm(Incident incidentData, boolean fromService) {
+        if (!fromService) {
+            txtIncidentId.setText(incidentData.getId());
+            Date incidentDate = incidentData.getDate();
+            txtIncidentDate.setText(DataIncident.getFormattedDate(incidentDate));
+        }
+
+        cmbIncidentOperator.setSelectedItem(incidentData.getOperator());
+        cmbIncidentOperator.setEnabled(!fromService);
+        txtIncidentDescription.setText(incidentData.getDescription());
+        txtIncidentService.setText(incidentData.getService());
+        processIncidentButton.setEnabled(false);
+        processIncidentButton.setEnabled(!fromService && incidentData.getStatus().equals("Pendiente"));
+    }
+
+    private void saveIncident(String action) {
+        String id = ("update".equals(action)) ? txtIncidentId.getText() : null;
+        Date date = null;
+        String operatorName = (String) cmbIncidentOperator.getSelectedItem();
+        String description = txtIncidentDescription.getText();
+        String serviceId = txtIncidentService.getText();
+        String status = (action.equals("new")) ? "Pendiente" : null;
+
+        if (description.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Incident newIncident = new Incident(id, date, operatorName, description, serviceId, status);
+        boolean success = false;
+
+        if ("new".equals(action)) {
+            success = DataIncident.createIncident(newIncident, userEmail);
+        } else if ("update".equals(action)) {
+            success = DataIncident.updateIncident(newIncident, userEmail);
+        }
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Registrado correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+            clearForm(formIncidentsPanel);
+            navigateCard("incidents");
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al registrar incidencia.", "VD Logistics", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -299,6 +372,8 @@ public class MainFrame extends javax.swing.JFrame {
         deleteServiceButton = new javax.swing.JButton();
         backServices = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
+        newIncidentFromServiceButton = new javax.swing.JButton();
+        incidentIdToService = new javax.swing.JTextField();
         jLabel23 = new javax.swing.JLabel();
         dcServiceDate = new com.toedter.calendar.JDateChooser();
         jLabel31 = new javax.swing.JLabel();
@@ -330,6 +405,30 @@ public class MainFrame extends javax.swing.JFrame {
         saveDiscardPanel1 = new javax.swing.JPanel();
         saveService = new javax.swing.JButton();
         discardService = new javax.swing.JButton();
+        formIncidentsPanel = new BackgroundPanel();
+        jLabel35 = new javax.swing.JLabel();
+        opUsers1 = new javax.swing.JPanel();
+        jLabel36 = new javax.swing.JLabel();
+        createIncidentButton = new javax.swing.JButton();
+        updateIncidentButton = new javax.swing.JButton();
+        deleteIncidentButton = new javax.swing.JButton();
+        backIncidents = new javax.swing.JButton();
+        jSeparator3 = new javax.swing.JSeparator();
+        jLabel37 = new javax.swing.JLabel();
+        txtIncidentId = new javax.swing.JTextField();
+        jLabel45 = new javax.swing.JLabel();
+        txtIncidentDate = new javax.swing.JTextField();
+        jLabel39 = new javax.swing.JLabel();
+        cmbIncidentOperator = new javax.swing.JComboBox<>();
+        jLabel42 = new javax.swing.JLabel();
+        incidentDescriptionJSPanel = new javax.swing.JScrollPane();
+        txtIncidentDescription = new javax.swing.JTextArea();
+        jLabel40 = new javax.swing.JLabel();
+        txtIncidentService = new javax.swing.JTextField();
+        processIncidentButton = new javax.swing.JButton();
+        saveDiscardPanel2 = new javax.swing.JPanel();
+        saveIncident = new javax.swing.JButton();
+        discardIncident = new javax.swing.JButton();
         jMenuBar = new javax.swing.JMenuBar();
         usersMenu = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -809,6 +908,11 @@ public class MainFrame extends javax.swing.JFrame {
         pendingIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         pendingIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         pendingIncidentsTable.setShowGrid(true);
+        pendingIncidentsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                pendingIncidentsTableMouseClicked(evt);
+            }
+        });
         pendingIncidentsScrollPanel.setViewportView(pendingIncidentsTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -849,6 +953,11 @@ public class MainFrame extends javax.swing.JFrame {
         processedIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         processedIncidentsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         processedIncidentsTable.setShowGrid(true);
+        processedIncidentsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                processedIncidentsTableMouseClicked(evt);
+            }
+        });
         processedIncidentsScrollPanel.setViewportView(processedIncidentsTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1181,18 +1290,24 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
+        newIncidentFromServiceButton.setBackground(new java.awt.Color(0, 68, 85));
+        newIncidentFromServiceButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        newIncidentFromServiceButton.setForeground(new java.awt.Color(255, 255, 255));
+        newIncidentFromServiceButton.setText("Abrir incidencia");
+        newIncidentFromServiceButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        newIncidentFromServiceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newIncidentFromServiceButtonActionPerformed(evt);
+            }
+        });
+
+        incidentIdToService.setText("IncidentId");
+        incidentIdToService.setFocusable(false);
+
         javax.swing.GroupLayout opServicesLayout = new javax.swing.GroupLayout(opServices);
         opServices.setLayout(opServicesLayout);
         opServicesLayout.setHorizontalGroup(
             opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opServicesLayout.createSequentialGroup()
-                .addContainerGap(74, Short.MAX_VALUE)
-                .addGroup(opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel21, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(createServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(updateServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(deleteServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(80, 80, 80))
             .addComponent(jSeparator2)
             .addGroup(opServicesLayout.createSequentialGroup()
                 .addGroup(opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1204,7 +1319,21 @@ public class MainFrame extends javax.swing.JFrame {
                         .addComponent(jLabel22)
                         .addGap(26, 26, 26)
                         .addComponent(txtServiceId, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(32, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opServicesLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opServicesLayout.createSequentialGroup()
+                        .addGroup(opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel21, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(createServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(updateServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(deleteServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(newIncidentFromServiceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(80, 80, 80))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opServicesLayout.createSequentialGroup()
+                        .addComponent(incidentIdToService, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(110, 110, 110))))
         );
         opServicesLayout.setVerticalGroup(
             opServicesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1222,10 +1351,14 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGap(44, 44, 44)
                 .addComponent(deleteServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(44, 44, 44)
+                .addComponent(newIncidentFromServiceButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(48, 48, 48)
                 .addComponent(backServices, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(226, Short.MAX_VALUE))
+                .addGap(30, 30, 30)
+                .addComponent(incidentIdToService, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(97, Short.MAX_VALUE))
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1325,6 +1458,7 @@ public class MainFrame extends javax.swing.JFrame {
         formServicesPanel.add(jLabel27, gridBagConstraints);
 
         txtServiceDescription.setColumns(20);
+        txtServiceDescription.setLineWrap(true);
         txtServiceDescription.setRows(5);
         serviceDescriptionJSPanel.setViewportView(txtServiceDescription);
 
@@ -1383,6 +1517,11 @@ public class MainFrame extends javax.swing.JFrame {
         cmbServiceType.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceType.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         cmbServiceType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Medición", "Transporte", "Montaje" }));
+        cmbServiceType.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbServiceTypeActionPerformed(evt);
+            }
+        });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 10;
         gridBagConstraints.gridy = 8;
@@ -1461,6 +1600,7 @@ public class MainFrame extends javax.swing.JFrame {
         formServicesPanel.add(jLabel32, gridBagConstraints);
 
         txtServiceComments.setColumns(20);
+        txtServiceComments.setLineWrap(true);
         txtServiceComments.setRows(4);
         serviceCommentsJSPanel.setViewportView(txtServiceComments);
 
@@ -1646,6 +1786,229 @@ public class MainFrame extends javax.swing.JFrame {
 
         mainContent.add(formServicesPanel, "formServices");
 
+        formIncidentsPanel.setBackground(new java.awt.Color(0, 153, 204));
+        formIncidentsPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        formIncidentsPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jLabel35.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel35.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel35.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel35.setText("Formulario de Incidencias - VD Logistics");
+        formIncidentsPanel.add(jLabel35, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 40, -1, -1));
+
+        opUsers1.setBackground(new java.awt.Color(0, 153, 153));
+        opUsers1.setAlignmentX(0.0F);
+        opUsers1.setAlignmentY(0.0F);
+        opUsers1.setPreferredSize(new java.awt.Dimension(240, 1100));
+
+        jLabel36.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 20)); // NOI18N
+        jLabel36.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel36.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel36.setText("Operaciones");
+
+        createIncidentButton.setBackground(new java.awt.Color(0, 68, 85));
+        createIncidentButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        createIncidentButton.setForeground(new java.awt.Color(255, 255, 255));
+        createIncidentButton.setText("Crear Nueva");
+        createIncidentButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        createIncidentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createIncidentButtonActionPerformed(evt);
+            }
+        });
+
+        updateIncidentButton.setBackground(new java.awt.Color(0, 68, 85));
+        updateIncidentButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        updateIncidentButton.setForeground(new java.awt.Color(255, 255, 255));
+        updateIncidentButton.setText("Editar datos");
+        updateIncidentButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        updateIncidentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateIncidentButtonActionPerformed(evt);
+            }
+        });
+
+        deleteIncidentButton.setBackground(new java.awt.Color(0, 68, 85));
+        deleteIncidentButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        deleteIncidentButton.setForeground(new java.awt.Color(255, 255, 255));
+        deleteIncidentButton.setText("Eliminar");
+        deleteIncidentButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        deleteIncidentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteIncidentButtonActionPerformed(evt);
+            }
+        });
+
+        backIncidents.setBackground(new java.awt.Color(3, 121, 157));
+        backIncidents.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        backIncidents.setForeground(new java.awt.Color(255, 255, 255));
+        backIncidents.setText("Volver");
+        backIncidents.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        backIncidents.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                backIncidentsActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout opUsers1Layout = new javax.swing.GroupLayout(opUsers1);
+        opUsers1.setLayout(opUsers1Layout);
+        opUsers1Layout.setHorizontalGroup(
+            opUsers1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opUsers1Layout.createSequentialGroup()
+                .addContainerGap(74, Short.MAX_VALUE)
+                .addGroup(opUsers1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel36, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(createIncidentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(updateIncidentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(deleteIncidentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(80, 80, 80))
+            .addComponent(jSeparator3)
+            .addGroup(opUsers1Layout.createSequentialGroup()
+                .addGap(76, 76, 76)
+                .addComponent(backIncidents, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        opUsers1Layout.setVerticalGroup(
+            opUsers1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(opUsers1Layout.createSequentialGroup()
+                .addGap(68, 68, 68)
+                .addComponent(jLabel36)
+                .addGap(60, 60, 60)
+                .addComponent(createIncidentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(51, 51, 51)
+                .addComponent(updateIncidentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(deleteIncidentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(backIncidents, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(607, Short.MAX_VALUE))
+        );
+
+        formIncidentsPanel.add(opUsers1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
+
+        jLabel37.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel37.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel37.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel37.setText("ID:");
+        formIncidentsPanel.add(jLabel37, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 125, -1, -1));
+
+        txtIncidentId.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtIncidentId.setForeground(new java.awt.Color(0, 0, 0));
+        txtIncidentId.setDisabledTextColor(new java.awt.Color(153, 153, 153));
+        txtIncidentId.setEnabled(false);
+        txtIncidentId.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtIncidentIdActionPerformed(evt);
+            }
+        });
+        formIncidentsPanel.add(txtIncidentId, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 120, 280, 30));
+
+        jLabel45.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel45.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel45.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel45.setText("Fecha / Hora:");
+        formIncidentsPanel.add(jLabel45, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 205, -1, -1));
+
+        txtIncidentDate.setEditable(false);
+        formIncidentsPanel.add(txtIncidentDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 200, 280, 30));
+
+        jLabel39.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel39.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel39.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel39.setText("Operario:");
+        formIncidentsPanel.add(jLabel39, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 285, -1, -1));
+
+        cmbIncidentOperator.setBackground(new java.awt.Color(255, 255, 255));
+        cmbIncidentOperator.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        formIncidentsPanel.add(cmbIncidentOperator, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 280, 320, 30));
+
+        jLabel42.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel42.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel42.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel42.setText("Descripción:");
+        formIncidentsPanel.add(jLabel42, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 365, -1, -1));
+
+        txtIncidentDescription.setColumns(20);
+        txtIncidentDescription.setRows(5);
+        incidentDescriptionJSPanel.setViewportView(txtIncidentDescription);
+
+        formIncidentsPanel.add(incidentDescriptionJSPanel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 360, 320, 90));
+
+        jLabel40.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel40.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel40.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel40.setText("Servicio:");
+        formIncidentsPanel.add(jLabel40, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 500, -1, -1));
+
+        txtIncidentService.setEditable(false);
+        txtIncidentService.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtIncidentService.setForeground(new java.awt.Color(0, 0, 0));
+        formIncidentsPanel.add(txtIncidentService, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 500, 240, 30));
+
+        processIncidentButton.setBackground(new java.awt.Color(0, 153, 153));
+        processIncidentButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        processIncidentButton.setForeground(new java.awt.Color(255, 255, 255));
+        processIncidentButton.setText("Tramitar Incidencia");
+        processIncidentButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        processIncidentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                processIncidentButtonActionPerformed(evt);
+            }
+        });
+        formIncidentsPanel.add(processIncidentButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 590, 160, 30));
+
+        saveDiscardPanel2.setBackground(new java.awt.Color(0, 153, 153));
+        saveDiscardPanel2.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        saveIncident.setBackground(new java.awt.Color(3, 121, 157));
+        saveIncident.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        saveIncident.setForeground(new java.awt.Color(255, 255, 255));
+        saveIncident.setText("Guardar");
+        saveIncident.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        saveIncident.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveIncidentActionPerformed(evt);
+            }
+        });
+
+        discardIncident.setBackground(new java.awt.Color(0, 68, 85));
+        discardIncident.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        discardIncident.setForeground(new java.awt.Color(255, 255, 255));
+        discardIncident.setText("Cancelar");
+        discardIncident.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        discardIncident.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                discardIncidentActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout saveDiscardPanel2Layout = new javax.swing.GroupLayout(saveDiscardPanel2);
+        saveDiscardPanel2.setLayout(saveDiscardPanel2Layout);
+        saveDiscardPanel2Layout.setHorizontalGroup(
+            saveDiscardPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(saveDiscardPanel2Layout.createSequentialGroup()
+                .addGap(60, 60, 60)
+                .addComponent(saveIncident, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 122, Short.MAX_VALUE)
+                .addComponent(discardIncident, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(60, 60, 60))
+        );
+        saveDiscardPanel2Layout.setVerticalGroup(
+            saveDiscardPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(saveDiscardPanel2Layout.createSequentialGroup()
+                .addGap(38, 38, 38)
+                .addGroup(saveDiscardPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(saveIncident, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(discardIncident, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(32, Short.MAX_VALUE))
+        );
+
+        formIncidentsPanel.add(saveDiscardPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 680, 500, 110));
+
+        mainContent.add(formIncidentsPanel, "formIncidents");
+
         mainScrollPanel.setViewportView(mainContent);
 
         usersMenu.setText("Usuarios");
@@ -1715,6 +2078,11 @@ public class MainFrame extends javax.swing.JFrame {
         incidentsMenu.setText("Incidencias");
 
         jMenuItem6.setText("Crear Nueva");
+        jMenuItem6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem6ActionPerformed(evt);
+            }
+        });
         incidentsMenu.add(jMenuItem6);
 
         jMenuItem7.setText("Listado de Incidencias");
@@ -1928,6 +2296,7 @@ public class MainFrame extends javax.swing.JFrame {
         txtServiceId.setText("");
         enabledDashboardButtons();
         createServiceButton.setEnabled(false);
+        newIncidentFromServiceButton.setEnabled(false);
         dcServiceDate.requestFocus();
     }//GEN-LAST:event_createServiceButtonActionPerformed
 
@@ -1995,7 +2364,7 @@ public class MainFrame extends javax.swing.JFrame {
                 FileService fileOpener = new FileService(sharedFileList, operatorFileList, serviceId);
                 navigateCard("formServices");
                 updateServiceButton.setEnabled(false);
-                showServiceForm(serviceData);
+                showServiceForm(serviceData, false);
             } else {
                 JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario", "VD Logistics", JOptionPane.ERROR_MESSAGE);
             }
@@ -2018,7 +2387,7 @@ public class MainFrame extends javax.swing.JFrame {
             if (serviceData != null) {
                 navigateCard("formServices");
                 updateServiceButton.setEnabled(false);
-                showServiceForm(serviceData);
+                showServiceForm(serviceData, false);
             } else {
                 JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario", "VD Logistics", JOptionPane.ERROR_MESSAGE);
             }
@@ -2033,7 +2402,7 @@ public class MainFrame extends javax.swing.JFrame {
             if (serviceData != null) {
                 navigateCard("formServices");
                 updateServiceButton.setEnabled(false);
-                showServiceForm(serviceData);
+                showServiceForm(serviceData, false);
             } else {
                 JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario", "VD Logistics", JOptionPane.ERROR_MESSAGE);
             }
@@ -2048,7 +2417,7 @@ public class MainFrame extends javax.swing.JFrame {
             if (serviceData != null) {
                 navigateCard("formServices");
                 updateServiceButton.setEnabled(false);
-                showServiceForm(serviceData);
+                showServiceForm(serviceData, false);
             } else {
                 JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario", "VD Logistics", JOptionPane.ERROR_MESSAGE);
             }
@@ -2083,9 +2452,7 @@ public class MainFrame extends javax.swing.JFrame {
                     e.printStackTrace();
                 }
             }
-
             JOptionPane.showMessageDialog(this, "Archivos subidos correctamente.", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
-
         }
     }//GEN-LAST:event_addFileButtonActionPerformed
 
@@ -2120,7 +2487,7 @@ public class MainFrame extends javax.swing.JFrame {
             if (serviceData != null) {
                 navigateCard("formServices");
                 updateServiceButton.setEnabled(false);
-                showServiceForm(serviceData);
+                showServiceForm(serviceData, false);
             } else {
                 JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario", "VD Logistics", JOptionPane.ERROR_MESSAGE);
             }
@@ -2130,6 +2497,131 @@ public class MainFrame extends javax.swing.JFrame {
     private void jMenuItem13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem13ActionPerformed
         navigateCard("completedServices");
     }//GEN-LAST:event_jMenuItem13ActionPerformed
+
+    private void createIncidentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createIncidentButtonActionPerformed
+        clearForm(formIncidentsPanel);
+        JOptionPane.showMessageDialog(this, "Debes seleccionar un servicio", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+        enabledDashboardButtons();
+        navigateCard("services");
+    }//GEN-LAST:event_createIncidentButtonActionPerformed
+
+    private void updateIncidentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateIncidentButtonActionPerformed
+        navigateCard("incidents");
+        clearForm(formIncidentsPanel);
+        enabledDashboardButtons();
+    }//GEN-LAST:event_updateIncidentButtonActionPerformed
+
+    private void deleteIncidentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteIncidentButtonActionPerformed
+        if (!txtIncidentId.getText().isEmpty()) {
+            int confirm = JOptionPane.showConfirmDialog(this, "¿ Estás seguro de eliminar esta incidencia ?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+            String incidentId = txtIncidentId.getText().trim();
+            if (confirm == JOptionPane.YES_OPTION) {
+                DataIncident.deleteIncident(this.userEmail, incidentId);
+                navigateCard("incidents");
+                clearForm(formIncidentsPanel);
+                enabledDashboardButtons();
+            }
+        } else {
+            navigateCard("incidents");
+            clearForm(formIncidentsPanel);
+            enabledDashboardButtons();
+        }
+    }//GEN-LAST:event_deleteIncidentButtonActionPerformed
+
+    private void backIncidentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backIncidentsActionPerformed
+        navigateCard("incidents");
+        clearForm(formIncidentsPanel);
+        enabledDashboardButtons();
+    }//GEN-LAST:event_backIncidentsActionPerformed
+
+    private void saveIncidentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveIncidentActionPerformed
+        if (txtIncidentId.getText().isEmpty()) {
+            saveIncident("new");
+        } else {
+            saveIncident("update");
+            navigateCard("incidents");
+            clearForm(formIncidentsPanel);
+            enabledDashboardButtons();
+        }
+    }//GEN-LAST:event_saveIncidentActionPerformed
+
+    private void discardIncidentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_discardIncidentActionPerformed
+        navigateCard("incidents");
+        clearForm(formIncidentsPanel);
+        enabledDashboardButtons();
+    }//GEN-LAST:event_discardIncidentActionPerformed
+
+    private void pendingIncidentsTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pendingIncidentsTableMouseClicked
+        int selectedRow = pendingIncidentsTable.getSelectedRow();
+        if (selectedRow != -1 && pendingIncidentsTable.getValueAt(selectedRow, 1) != "No hay incidencias") {
+            String incidentId = pendingIncidentsTable.getValueAt(selectedRow, 0).toString();
+            Incident incidentData = DataIncident.getIncidentById(incidentId);
+            if (incidentData != null) {
+                navigateCard("formIncidents");
+                updateIncidentButton.setEnabled(false);
+                showIncidentForm(incidentData, false);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar los datos", "VD Logistics", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_pendingIncidentsTableMouseClicked
+
+    private void processedIncidentsTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_processedIncidentsTableMouseClicked
+        int selectedRow = processedIncidentsTable.getSelectedRow();
+        if (selectedRow != -1 && processedIncidentsTable.getValueAt(selectedRow, 1) != "No hay incidencias") {
+            String incidentId = processedIncidentsTable.getValueAt(selectedRow, 0).toString();
+            Incident incidentData = DataIncident.getIncidentById(incidentId);
+            if (incidentData != null) {
+                navigateCard("formIncidents");
+                updateIncidentButton.setEnabled(false);
+                showIncidentForm(incidentData, false);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar los datos", "VD Logistics", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_processedIncidentsTableMouseClicked
+
+    private void jMenuItem6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem6ActionPerformed
+        clearForm(formIncidentsPanel);
+        JOptionPane.showMessageDialog(this, "Debes seleccionar un servicio", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+        enabledDashboardButtons();
+        navigateCard("services");
+    }//GEN-LAST:event_jMenuItem6ActionPerformed
+
+    private void txtIncidentIdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtIncidentIdActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtIncidentIdActionPerformed
+
+    private void processIncidentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processIncidentButtonActionPerformed
+        Service incidentService = DataService.getServiceById(txtIncidentService.getText());
+        String incidentOperator = incidentService.getOperator();
+        String incidentTypeService = incidentService.getType();
+        String incidentCustomer = incidentService.getCustomer();
+        String incidentStatusService = "Pendiente";
+        String incidentDescription = "Incidencia No. " + txtIncidentId.getText() + ": " + txtIncidentDescription.getText();
+        String incidentComments = "";
+        Service serviceData = new Service(null, null, incidentOperator, incidentTypeService, incidentCustomer, incidentStatusService, incidentDescription, incidentComments);
+        incidentIdToService.setText(txtIncidentId.getText());
+        navigateCard("formServices");
+        updateServiceButton.setEnabled(false);
+        showServiceForm(serviceData, true);
+    }//GEN-LAST:event_processIncidentButtonActionPerformed
+
+    private void newIncidentFromServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newIncidentFromServiceButtonActionPerformed
+        String serviceId = txtServiceId.getText();
+        String incidentOperator = (String) cmbServiceOperator.getSelectedItem();
+        String incidentStatus = "Pendiente";
+        String incidentDescription = "";
+        Incident incidentData = new Incident(null, null, incidentOperator, incidentDescription, serviceId, incidentStatus);
+
+        navigateCard("formIncidents");
+        updateIncidentButton.setEnabled(false);
+        showIncidentForm(incidentData, true);
+    }//GEN-LAST:event_newIncidentFromServiceButtonActionPerformed
+
+    private void cmbServiceTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbServiceTypeActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbServiceTypeActionPerformed
 
     private void deleteFileFromStorage(String fileName, String serviceId) {
         try {
@@ -2191,8 +2683,10 @@ public class MainFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addFileButton;
+    private javax.swing.JButton backIncidents;
     private javax.swing.JButton backServices;
     private javax.swing.JButton backUsers;
+    private javax.swing.JComboBox<String> cmbIncidentOperator;
     private javax.swing.JComboBox<String> cmbServiceCustomer;
     private javax.swing.JComboBox<String> cmbServiceOperator;
     private javax.swing.JComboBox<String> cmbServiceStatus;
@@ -2203,6 +2697,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTable completedTable;
     private javax.swing.JScrollPane confirmedScrollPanel;
     private javax.swing.JTable confirmedTable;
+    private javax.swing.JButton createIncidentButton;
     private javax.swing.JButton createServiceButton;
     private javax.swing.JButton createUserButton;
     private javax.swing.JMenu currentUserMenu;
@@ -2212,12 +2707,17 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTable customersTable;
     private com.toedter.calendar.JDateChooser dcServiceDate;
     private javax.swing.JButton deleteFileButton;
+    private javax.swing.JButton deleteIncidentButton;
     private javax.swing.JButton deleteServiceButton;
     private javax.swing.JButton deleteUserButton;
+    private javax.swing.JButton discardIncident;
     private javax.swing.JButton discardService;
     private javax.swing.JButton discardUser;
+    private javax.swing.JPanel formIncidentsPanel;
     private javax.swing.JPanel formServicesPanel;
     private javax.swing.JPanel formUsersPanel;
+    private javax.swing.JScrollPane incidentDescriptionJSPanel;
+    private javax.swing.JTextField incidentIdToService;
     private javax.swing.JMenu incidentsMenu;
     private javax.swing.JPanel incidentsPanel;
     private javax.swing.JFileChooser jFileChooser;
@@ -2249,7 +2749,14 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel32;
     private javax.swing.JLabel jLabel33;
     private javax.swing.JLabel jLabel34;
+    private javax.swing.JLabel jLabel35;
+    private javax.swing.JLabel jLabel36;
+    private javax.swing.JLabel jLabel37;
+    private javax.swing.JLabel jLabel39;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel40;
+    private javax.swing.JLabel jLabel42;
+    private javax.swing.JLabel jLabel45;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -2271,6 +2778,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem9;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
     private javax.swing.JLabel loadingLabel;
     private javax.swing.JPanel logsPanel;
     private javax.swing.JScrollPane logsScrollPanel;
@@ -2279,8 +2787,10 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane mainScrollPanel;
     private javax.swing.JScrollPane newDateScrollPanel;
     private javax.swing.JTable newDateTable;
+    private javax.swing.JButton newIncidentFromServiceButton;
     private javax.swing.JPanel opServices;
     private javax.swing.JPanel opUsers;
+    private javax.swing.JPanel opUsers1;
     private javax.swing.JList<String> operatorFileList;
     private javax.swing.JScrollPane operatorFilesJSPanel;
     private javax.swing.JPanel otherServicesPanel;
@@ -2290,10 +2800,13 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTable pendingIncidentsTable;
     private javax.swing.JScrollPane pendingScrollPanel;
     private javax.swing.JTable pendingTable;
+    private javax.swing.JButton processIncidentButton;
     private javax.swing.JScrollPane processedIncidentsScrollPanel;
     private javax.swing.JTable processedIncidentsTable;
     private javax.swing.JPanel saveDiscardPanel;
     private javax.swing.JPanel saveDiscardPanel1;
+    private javax.swing.JPanel saveDiscardPanel2;
+    private javax.swing.JButton saveIncident;
     private javax.swing.JButton saveService;
     private javax.swing.JButton saveUser;
     private javax.swing.JScrollPane serviceCommentsJSPanel;
@@ -2304,6 +2817,10 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane sharedFilesJSPanel;
     private javax.swing.JSpinner spServiceHour;
     private javax.swing.JSpinner spServiceMinute;
+    private javax.swing.JTextField txtIncidentDate;
+    private javax.swing.JTextArea txtIncidentDescription;
+    private javax.swing.JTextField txtIncidentId;
+    private javax.swing.JTextField txtIncidentService;
     private javax.swing.JTextArea txtServiceComments;
     private javax.swing.JTextArea txtServiceDescription;
     private javax.swing.JTextField txtServiceId;
@@ -2314,6 +2831,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTextField txtUserLastName;
     private javax.swing.JPasswordField txtUserPassword;
     private javax.swing.JTextField txtUserPhone;
+    private javax.swing.JButton updateIncidentButton;
     private javax.swing.JButton updateServiceButton;
     private javax.swing.JButton updateUserButton;
     private javax.swing.JMenu usersMenu;

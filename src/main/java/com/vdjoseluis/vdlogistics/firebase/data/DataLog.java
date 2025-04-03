@@ -4,10 +4,7 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
-import com.toedter.calendar.JDateChooser;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
-import com.vdjoseluis.vdlogistics.models.Service;
-import com.vdjoseluis.vdlogistics.models.User;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,13 +12,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
-public class DataLogs {
+public class DataLog {
 
     private static final Firestore db = FirebaseConfig.getFirestore();
 

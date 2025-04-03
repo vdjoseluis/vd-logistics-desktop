@@ -174,7 +174,7 @@ public class DataService {
             data.put("comments", service.getComments());
 
             docRef.set(data);                        
-            DataLogs.registerLog(userEmail, "Añade servicio", docRef.getId());
+            DataLog.registerLog(userEmail, "Añade servicio", docRef.getId());
 
             System.out.println("✅ Servicio creado correctamente ");
             return true;
@@ -201,7 +201,7 @@ public class DataService {
             data.put("comments", service.getComments());
 
             docRef.update(data).get();
-            DataLogs.registerLog(userEmail, "Actualiza servicio", docRef.getId());
+            DataLog.registerLog(userEmail, "Actualiza servicio", docRef.getId());
 
             System.out.println("✅ Servicio actualizado correctamente ");
             return true;
@@ -232,11 +232,11 @@ public class DataService {
     public static boolean deleteService(String userEmail, String serviceId) {
         try {
             db.collection("services").document(serviceId).delete().get();
-            DataLogs.registerLog(userEmail, "Elimina servicio", serviceId);
-            System.out.println("Usuario eliminado correctamente");
+            DataLog.registerLog(userEmail, "Elimina servicio", serviceId);
+            System.out.println("Servicio eliminado correctamente");
             return true;
         } catch (Exception e) {
-            System.err.println("Error al eliminar usuario: " + e.getMessage());
+            System.err.println("Error al eliminar servicio: " + e.getMessage());
             return false;
         }
     }

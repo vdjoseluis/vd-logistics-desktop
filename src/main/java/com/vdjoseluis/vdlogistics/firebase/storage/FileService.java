@@ -70,7 +70,6 @@ public class FileService {
 
         try {
             String bucketName = "vd-logistics.firebasestorage.app";
-            //String filePathInBucket = "services/" + serviceId + "/" +  selectedFile;
             String filePathInBucket = folderPath + selectedFile;
 
             Bucket bucket = StorageClient.getInstance().bucket(bucketName);
