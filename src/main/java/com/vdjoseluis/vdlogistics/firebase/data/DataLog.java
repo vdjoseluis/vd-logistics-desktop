@@ -21,7 +21,7 @@ public class DataLog {
 
     private static final Firestore db = FirebaseConfig.getFirestore();
 
-    private static final String[] COLUMN_NAMES = {"ID", "Fecha", "Operario", "Acción Realizada", "Servicio"};
+    private static final String[] COLUMN_NAMES = {"ID", "Fecha", "Usuario", "Acción Realizada", "Servicio"};
 
     private static void setColumnModel(JTable table) {
         TableColumnModel model = table.getColumnModel();

@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JLabel;
@@ -92,7 +93,7 @@ public class DataService {
             }
 
             SwingUtilities.invokeLater(() -> {
-                table.setModel(model); // Actualiza la tabla            
+                table.setModel(model); // Actualiza la tabla  
                 setColumnModel(table);
                 loadingLabel.setVisible(false);
                 table.setVisible(true);
@@ -123,7 +124,7 @@ public class DataService {
             String address = doc.getString("address");
             if (address != null && address.contains(",")) {
                 String[] parts = address.split(",");
-                return parts[parts.length - 1].trim();  
+                return parts[parts.length - 1].trim();
             }
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
@@ -158,13 +159,81 @@ public class DataService {
         return null;
     }
 
+    public static void loadServicesByCustomerIds(JTable table, List<String> customerIds, JLabel loadingLabel, JScrollPane scrollPane) {
+
+        if (customerIds == null || customerIds.isEmpty()) {
+            return;
+        }
+
+        CollectionReference services = db.collection("services");
+
+        DefaultTableModel model = new DefaultTableModel(new String[]{
+            "ID", "Fecha", "Tipo", "Estado", "Descripción"
+        }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        SwingUtilities.invokeLater(() -> {
+            loadingLabel.setBounds(scrollPane.getX() + 640, scrollPane.getY() + 120, 100, 100);
+            scrollPane.getParent().add(loadingLabel);
+            scrollPane.getParent().setComponentZOrder(loadingLabel, 0);
+            loadingLabel.setVisible(true);
+            table.setVisible(false);
+        });
+
+        model.setRowCount(0);
+
+        try {
+            for (String customerId : customerIds) {
+                DocumentReference customerRef = db.collection("customers").document(customerId);
+
+                Query query = services.whereEqualTo("refCustomer", customerRef)
+                        .orderBy("date", Query.Direction.ASCENDING);
+
+                QuerySnapshot snapshots = query.get().get();
+
+                if (!snapshots.isEmpty()) {
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        Date date = doc.getDate("date");
+                        String formattedDate = new SimpleDateFormat("dd/MM/yyyy HH:mm").format(date);
+
+                        model.addRow(new Object[]{
+                            doc.getId(),
+                            formattedDate,
+                            doc.getString("type"),
+                            doc.getString("status"),
+                            doc.getString("description")
+                        });
+                    }
+                }
+            }
+
+            if (model.getRowCount() == 0) {
+                model.addRow(new Object[]{"", "No hay servicios", "", "", ""});
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener servicios: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            table.setModel(model);
+            loadingLabel.setVisible(false);
+            table.setVisible(true);
+        });
+    }
+
     public static String createService(Service service, String userEmail, JDateChooser date, JSpinner hour, JSpinner minutes) {
         try {
             DocumentReference docRef = db.collection("services").document();
-            
+
             String operatorId = DataUser.operatorMap.get(service.getOperator());
             String customerId = DataCustomer.customerMap.get(service.getCustomer());
-                        
+
             Map<String, Object> data = new HashMap<>();
             data.put("date", getTimestamp(date, hour, minutes));
             data.put("description", service.getDescription());
@@ -174,7 +243,7 @@ public class DataService {
             data.put("refCustomer", db.collection("customers").document(customerId));
             data.put("comments", service.getComments());
 
-            docRef.set(data);                        
+            docRef.set(data);
             DataLog.registerLog(userEmail, "Añade servicio", docRef.getId());
 
             System.out.println("✅ Servicio creado correctamente ");
@@ -184,14 +253,14 @@ public class DataService {
             return null;
         }
     }
-    
+
     public static String updateService(Service service, String userEmail, JDateChooser date, JSpinner hour, JSpinner minutes) {
         try {
             DocumentReference docRef = db.collection("services").document(service.getId());
-            
+
             String operatorId = DataUser.operatorMap.get(service.getOperator());
             String customerId = DataCustomer.customerMap.get(service.getCustomer());
-                        
+
             Map<String, Object> data = new HashMap<>();
             data.put("date", getTimestamp(date, hour, minutes));
             data.put("description", service.getDescription());
@@ -211,25 +280,25 @@ public class DataService {
             return null;
         }
     }
-    
+
     private static Timestamp getTimestamp(JDateChooser jDateChooser, JSpinner hourSelector, JSpinner minuteSelector) {
         try {
             Date selectedDate = jDateChooser.getDate();
             int hour = (Integer) hourSelector.getValue();
             int minutes = (Integer) minuteSelector.getValue();
-            
+
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(selectedDate);
             calendar.set(Calendar.HOUR_OF_DAY, hour);
             calendar.set(Calendar.MINUTE, minutes);
             calendar.set(Calendar.SECOND, 0);
-            
+
             return Timestamp.of(calendar.getTime());
         } catch (Exception e) {
             return null;
         }
     }
-    
+
     public static boolean deleteService(String userEmail, String serviceId) {
         try {
             db.collection("services").document(serviceId).delete().get();

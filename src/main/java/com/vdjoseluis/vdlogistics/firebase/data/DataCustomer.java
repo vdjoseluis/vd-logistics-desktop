@@ -1,11 +1,17 @@
 package com.vdjoseluis.vdlogistics.firebase.data;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
 import com.vdjoseluis.vdlogistics.models.Customer;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -138,6 +144,23 @@ public class DataCustomer {
         return null;
     }
 
+    public static List<String> getCustomerByPhone(String phone) {
+        List<String> customerIds = new ArrayList<>();
+
+        try {
+            ApiFuture<QuerySnapshot> future = db.collection("customers").whereEqualTo("phone", phone).get();
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot doc : documents) {
+                customerIds.add(doc.getId());
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error al obtener servicio: " + e.getMessage());
+        }
+        System.out.println(customerIds);
+        return customerIds;
+    }
+
     public static boolean createCustomer(Customer customer, String userEmail) {
         try {
             DocumentReference docRef = db.collection("customers").document();
@@ -164,7 +187,7 @@ public class DataCustomer {
     public static boolean updateCustomer(Customer customer, String userEmail) {
         try {
             DocumentReference docRef = db.collection("customers").document(customer.getId());
-            
+
             Map<String, Object> data = new HashMap<>();
             data.put("firstName", customer.getFirstName());
             data.put("lastName", customer.getLastName());
@@ -183,7 +206,7 @@ public class DataCustomer {
             return false;
         }
     }
-    
+
     public static boolean deleteCustomer(String userEmail, String customerId) {
         try {
             db.collection("customers").document(customerId).delete().get();
@@ -196,5 +219,6 @@ public class DataCustomer {
             return false;
         }
     }
+   
 
 }

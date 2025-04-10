@@ -39,6 +39,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -539,6 +540,13 @@ public class MainFrame extends javax.swing.JFrame {
         saveDiscardPanel3 = new javax.swing.JPanel();
         saveCustomer = new javax.swing.JButton();
         discardCustomer = new javax.swing.JButton();
+        searchServicesPanel = new BackgroundPanel();
+        jLabel52 = new javax.swing.JLabel();
+        jLabel51 = new javax.swing.JLabel();
+        txtSearchByPhone = new javax.swing.JTextField();
+        searchServiceButton = new javax.swing.JButton();
+        searchScrollPanel = new javax.swing.JScrollPane();
+        searchTable = new javax.swing.JTable();
         jMenuBar = new javax.swing.JMenuBar();
         usersMenu = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -549,6 +557,7 @@ public class MainFrame extends javax.swing.JFrame {
         jMenuItem5 = new javax.swing.JMenuItem();
         jMenuItem11 = new javax.swing.JMenuItem();
         jMenuItem13 = new javax.swing.JMenuItem();
+        jMenuItem14 = new javax.swing.JMenuItem();
         incidentsMenu = new javax.swing.JMenu();
         jMenuItem6 = new javax.swing.JMenuItem();
         jMenuItem7 = new javax.swing.JMenuItem();
@@ -1473,7 +1482,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(backServices, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(30, 30, 30)
                 .addComponent(incidentIdToService, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(97, Short.MAX_VALUE))
+                .addContainerGap(177, Short.MAX_VALUE))
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -2283,8 +2292,6 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel48.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel48.setText("Info Adicional:");
         formCustomersPanel.add(jLabel48, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 545, -1, -1));
-
-        txtCustomerAdditional.setBackground(new java.awt.Color(255, 255, 255));
         formCustomersPanel.add(txtCustomerAdditional, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 540, 280, 30));
 
         servicesByCustomer.setBackground(new java.awt.Color(0, 153, 153));
@@ -2349,6 +2356,108 @@ public class MainFrame extends javax.swing.JFrame {
 
         mainContent.add(formCustomersPanel, "formCustomers");
 
+        searchServicesPanel.setBackground(new java.awt.Color(0, 153, 204));
+        searchServicesPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        searchServicesPanel.setLayout(new java.awt.GridBagLayout());
+
+        jLabel52.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel52.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel52.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel52.setText("Listado de Servicios por Cliente");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(40, 500, 0, 0);
+        searchServicesPanel.add(jLabel52, gridBagConstraints);
+
+        jLabel51.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel51.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel51.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel51.setText("Número de teléfono:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(46, 480, 0, 0);
+        searchServicesPanel.add(jLabel51, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 135;
+        gridBagConstraints.ipady = 11;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(41, 19, 0, 0);
+        searchServicesPanel.add(txtSearchByPhone, gridBagConstraints);
+
+        searchServiceButton.setBackground(new java.awt.Color(0, 153, 153));
+        searchServiceButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        searchServiceButton.setForeground(new java.awt.Color(255, 255, 255));
+        searchServiceButton.setText("Buscar");
+        searchServiceButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        searchServiceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchServiceButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.ipadx = 42;
+        gridBagConstraints.ipady = 9;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(41, 20, 0, 0);
+        searchServicesPanel.add(searchServiceButton, gridBagConstraints);
+
+        searchScrollPanel.setAutoscrolls(true);
+        searchScrollPanel.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        searchScrollPanel.setViewportView(searchTable);
+
+        searchTable.setAutoCreateRowSorter(true);
+        searchTable.setBackground(java.awt.SystemColor.control);
+        searchTable.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        searchTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        searchTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Id Servicio", "Fecha", "Tipo de servicio", "Estado", "Descripción"
+            }
+        ));
+        searchTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        searchTable.setFillsViewportHeight(true);
+        searchTable.setFocusable(false);
+        searchTable.setRowHeight(40);
+        searchTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        searchTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        searchTable.setShowGrid(true);
+        searchTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                searchTableMouseClicked(evt);
+            }
+        });
+        searchScrollPanel.setViewportView(searchTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.ipadx = 1078;
+        gridBagConstraints.ipady = 464;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(60, 133, 60, 133);
+        searchServicesPanel.add(searchScrollPanel, gridBagConstraints);
+
+        mainContent.add(searchServicesPanel, "searchServices");
+
         mainScrollPanel.setViewportView(mainContent);
 
         usersMenu.setText("Usuarios");
@@ -2412,6 +2521,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         servicesMenu.add(jMenuItem13);
+
+        jMenuItem14.setText("Buscar servicios");
+        jMenuItem14.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem14ActionPerformed(evt);
+            }
+        });
+        servicesMenu.add(jMenuItem14);
 
         jMenuBar.add(servicesMenu);
 
@@ -3003,7 +3120,15 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_txtCustomerIdActionPerformed
 
     private void servicesByCustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_servicesByCustomerActionPerformed
-        // TODO add your handling code here:
+        if (!txtCustomerId.getText().isEmpty()) {
+            List<String> customerIds = DataCustomer.getCustomerByPhone(txtCustomerPhone.getText());
+            navigateCard("searchServices");
+            clearForm(formCustomersPanel);
+            enabledDashboardButtons();
+            DataService.loadServicesByCustomerIds(searchTable, customerIds, loadingLabel, mainScrollPanel);
+        } else {
+            JOptionPane.showMessageDialog(null, "No encontramos ningún cliente registrado", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+        }
     }//GEN-LAST:event_servicesByCustomerActionPerformed
 
     private void saveCustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCustomerActionPerformed
@@ -3039,12 +3164,48 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_customersTableMouseClicked
 
     private void jMenuItem8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem8ActionPerformed
+        navigateCard("formCustomers");
         clearForm(formCustomersPanel);
         enabledDashboardButtons();
         createCustomerButton.setEnabled(false);
         //newIncidentFromServiceButton.setEnabled(false);
         txtCustomerFirstName.requestFocus();
     }//GEN-LAST:event_jMenuItem8ActionPerformed
+
+    private void searchTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_searchTableMouseClicked
+        int selectedRow = searchTable.getSelectedRow();
+        if (selectedRow != -1 && searchTable.getValueAt(selectedRow, 1) != "No hay servicios") {
+            String serviceId = searchTable.getValueAt(selectedRow, 0).toString();
+            Service serviceData = DataService.getServiceById(serviceId);
+            if (serviceData != null) {
+                FileService fileOpener = new FileService(sharedFileList, operatorFileList, serviceId);
+                navigateCard("formServices");
+                updateServiceButton.setEnabled(false);
+                showServiceForm(serviceData, false);
+
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario", "VD Logistics", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_searchTableMouseClicked
+
+    private void searchServiceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchServiceButtonActionPerformed
+        List<String> customerIds = DataCustomer.getCustomerByPhone(txtSearchByPhone.getText());
+
+        if (customerIds == null || customerIds.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No encontramos ningún cliente", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+        } else {
+            DataService.loadServicesByCustomerIds(searchTable, customerIds, loadingLabel, mainScrollPanel);
+        }
+    }//GEN-LAST:event_searchServiceButtonActionPerformed
+
+    private void jMenuItem14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem14ActionPerformed
+        navigateCard("searchServices");
+        clearForm(searchServicesPanel);
+        DefaultTableModel model = (DefaultTableModel) searchTable.getModel();
+        model.setRowCount(0);
+        txtSearchByPhone.requestFocus();
+    }//GEN-LAST:event_jMenuItem14ActionPerformed
 
     private void deleteFileFromStorage(String fileName, String serviceId) {
         try {
@@ -3161,6 +3322,8 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel49;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel50;
+    private javax.swing.JLabel jLabel51;
+    private javax.swing.JLabel jLabel52;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
@@ -3171,6 +3334,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem11;
     private javax.swing.JMenuItem jMenuItem12;
     private javax.swing.JMenuItem jMenuItem13;
+    private javax.swing.JMenuItem jMenuItem14;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -3216,6 +3380,10 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton saveIncident;
     private javax.swing.JButton saveService;
     private javax.swing.JButton saveUser;
+    private javax.swing.JScrollPane searchScrollPanel;
+    private javax.swing.JButton searchServiceButton;
+    private javax.swing.JPanel searchServicesPanel;
+    private javax.swing.JTable searchTable;
     private javax.swing.JScrollPane serviceCommentsJSPanel;
     private javax.swing.JScrollPane serviceDescriptionJSPanel;
     private javax.swing.JButton servicesByCustomer;
@@ -3236,6 +3404,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTextArea txtIncidentDescription;
     private javax.swing.JTextField txtIncidentId;
     private javax.swing.JTextField txtIncidentService;
+    private javax.swing.JTextField txtSearchByPhone;
     private javax.swing.JTextArea txtServiceComments;
     private javax.swing.JTextArea txtServiceDescription;
     private javax.swing.JTextField txtServiceId;
