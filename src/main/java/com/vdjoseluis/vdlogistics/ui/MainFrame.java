@@ -10,6 +10,7 @@ import com.vdjoseluis.vdlogistics.firebase.data.DataService;
 import com.vdjoseluis.vdlogistics.firebase.data.DataUser;
 import com.vdjoseluis.vdlogistics.firebase.storage.FileService;
 import com.vdjoseluis.vdlogistics.firebase.storage.FileUploader;
+import com.vdjoseluis.vdlogistics.models.Customer;
 import com.vdjoseluis.vdlogistics.models.Incident;
 import com.vdjoseluis.vdlogistics.models.Service;
 import com.vdjoseluis.vdlogistics.models.User;
@@ -110,6 +111,9 @@ public class MainFrame extends javax.swing.JFrame {
         createIncidentButton.setEnabled(true);
         updateIncidentButton.setEnabled(true);
         deleteIncidentButton.setEnabled(true);
+        createCustomerButton.setEnabled(true);
+        updateCustomerButton.setEnabled(true);
+        deleteCustomerButton.setEnabled(true);
     }
 
     private void clearForm(JPanel panel) {
@@ -158,6 +162,7 @@ public class MainFrame extends javax.swing.JFrame {
         User newUser = new User(email, firstName, lastName, phone, type, address);
         if (DataUser.createUser(newUser, password)) {
             clearForm(formUsersPanel);
+            enabledDashboardButtons();
             JOptionPane.showMessageDialog(this, "Usuario creado correctamente", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this, "Error al crear usuario.", "VD Logistics", JOptionPane.ERROR_MESSAGE);
@@ -254,11 +259,13 @@ public class MainFrame extends javax.swing.JFrame {
             uploadFromTempFiles(id);
             JOptionPane.showMessageDialog(this, "Incidencia tramitada correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
             clearForm(formServicesPanel);
+            enabledDashboardButtons();
             navigateCard("services");
         } else if (success) {
             uploadFromTempFiles(id);
             JOptionPane.showMessageDialog(this, "Registrado correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
             clearForm(formServicesPanel);
+            enabledDashboardButtons();
             navigateCard("services");
         } else {
             JOptionPane.showMessageDialog(this, "Error al registrar servicio.", "VD Logistics", JOptionPane.ERROR_MESSAGE);
@@ -305,9 +312,56 @@ public class MainFrame extends javax.swing.JFrame {
         if (success) {
             JOptionPane.showMessageDialog(this, "Registrado correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
             clearForm(formIncidentsPanel);
+            enabledDashboardButtons();
             navigateCard("incidents");
         } else {
             JOptionPane.showMessageDialog(this, "Error al registrar incidencia.", "VD Logistics", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void showCustomerForm(Customer customerData) {
+        txtCustomerId.setText(customerData.getId());
+        txtCustomerFirstName.setText(customerData.getFirstName());
+        txtCustomerLastName.setText(customerData.getLastName());
+        txtCustomerEmail.setText(customerData.getEmail());
+        txtCustomerPhone.setText(customerData.getPhone());
+        txtCustomerAddress.setText(customerData.getAddress());
+        txtCustomerAdditional.setText(customerData.getAdditional());
+
+//        processIncidentButton.setEnabled(false);
+//        processIncidentButton.setEnabled(!fromService && incidentData.getStatus().equals("Pendiente"));
+    }
+
+    private void saveCustomer(String action) {
+        String id = ("update".equals(action)) ? txtCustomerId.getText() : null;
+        String firstName = txtCustomerFirstName.getText();
+        String lastName = txtCustomerLastName.getText();
+        String email = txtCustomerEmail.getText();
+        String phone = txtCustomerPhone.getText();
+        String address = txtCustomerAddress.getText();
+        String additional = txtCustomerAdditional.getText();
+
+        if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Customer newCustomer = new Customer(id, firstName, lastName, email, phone, address, additional);
+        boolean success = false;
+
+        if ("new".equals(action)) {
+            success = DataCustomer.createCustomer(newCustomer, userEmail);
+        } else if ("update".equals(action)) {
+            success = DataCustomer.updateCustomer(newCustomer, userEmail);
+        }
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Registrado correctamente!", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+            clearForm(formCustomersPanel);
+            enabledDashboardButtons();
+            navigateCard("customers");
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al registrar cliente.", "VD Logistics", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -436,7 +490,7 @@ public class MainFrame extends javax.swing.JFrame {
         discardService = new javax.swing.JButton();
         formIncidentsPanel = new BackgroundPanel();
         jLabel35 = new javax.swing.JLabel();
-        opUsers1 = new javax.swing.JPanel();
+        opIncidents = new javax.swing.JPanel();
         jLabel36 = new javax.swing.JLabel();
         createIncidentButton = new javax.swing.JButton();
         updateIncidentButton = new javax.swing.JButton();
@@ -458,6 +512,33 @@ public class MainFrame extends javax.swing.JFrame {
         saveDiscardPanel2 = new javax.swing.JPanel();
         saveIncident = new javax.swing.JButton();
         discardIncident = new javax.swing.JButton();
+        formCustomersPanel = new BackgroundPanel();
+        jLabel38 = new javax.swing.JLabel();
+        opCustomers = new javax.swing.JPanel();
+        jLabel41 = new javax.swing.JLabel();
+        createCustomerButton = new javax.swing.JButton();
+        updateCustomerButton = new javax.swing.JButton();
+        deleteCustomerButton = new javax.swing.JButton();
+        backCustomers = new javax.swing.JButton();
+        jSeparator4 = new javax.swing.JSeparator();
+        jLabel43 = new javax.swing.JLabel();
+        txtCustomerId = new javax.swing.JTextField();
+        jLabel46 = new javax.swing.JLabel();
+        txtCustomerFirstName = new javax.swing.JTextField();
+        jLabel44 = new javax.swing.JLabel();
+        txtCustomerLastName = new javax.swing.JTextField();
+        jLabel49 = new javax.swing.JLabel();
+        txtCustomerEmail = new javax.swing.JTextField();
+        jLabel47 = new javax.swing.JLabel();
+        txtCustomerPhone = new javax.swing.JTextField();
+        jLabel50 = new javax.swing.JLabel();
+        txtCustomerAddress = new javax.swing.JTextField();
+        jLabel48 = new javax.swing.JLabel();
+        txtCustomerAdditional = new javax.swing.JTextField();
+        servicesByCustomer = new javax.swing.JButton();
+        saveDiscardPanel3 = new javax.swing.JPanel();
+        saveCustomer = new javax.swing.JButton();
+        discardCustomer = new javax.swing.JButton();
         jMenuBar = new javax.swing.JMenuBar();
         usersMenu = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -831,6 +912,11 @@ public class MainFrame extends javax.swing.JFrame {
         customersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         customersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         customersTable.setShowGrid(true);
+        customersTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                customersTableMouseClicked(evt);
+            }
+        });
         customersScrollPanel.setViewportView(customersTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1825,10 +1911,10 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel35.setText("Formulario de Incidencias - VD Logistics");
         formIncidentsPanel.add(jLabel35, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 40, -1, -1));
 
-        opUsers1.setBackground(new java.awt.Color(0, 153, 153));
-        opUsers1.setAlignmentX(0.0F);
-        opUsers1.setAlignmentY(0.0F);
-        opUsers1.setPreferredSize(new java.awt.Dimension(240, 1100));
+        opIncidents.setBackground(new java.awt.Color(0, 153, 153));
+        opIncidents.setAlignmentX(0.0F);
+        opIncidents.setAlignmentY(0.0F);
+        opIncidents.setPreferredSize(new java.awt.Dimension(240, 1100));
 
         jLabel36.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 20)); // NOI18N
         jLabel36.setForeground(new java.awt.Color(255, 255, 255));
@@ -1879,27 +1965,27 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout opUsers1Layout = new javax.swing.GroupLayout(opUsers1);
-        opUsers1.setLayout(opUsers1Layout);
-        opUsers1Layout.setHorizontalGroup(
-            opUsers1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opUsers1Layout.createSequentialGroup()
+        javax.swing.GroupLayout opIncidentsLayout = new javax.swing.GroupLayout(opIncidents);
+        opIncidents.setLayout(opIncidentsLayout);
+        opIncidentsLayout.setHorizontalGroup(
+            opIncidentsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opIncidentsLayout.createSequentialGroup()
                 .addContainerGap(74, Short.MAX_VALUE)
-                .addGroup(opUsers1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(opIncidentsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel36, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(createIncidentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(updateIncidentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(deleteIncidentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(80, 80, 80))
             .addComponent(jSeparator3)
-            .addGroup(opUsers1Layout.createSequentialGroup()
+            .addGroup(opIncidentsLayout.createSequentialGroup()
                 .addGap(76, 76, 76)
                 .addComponent(backIncidents, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        opUsers1Layout.setVerticalGroup(
-            opUsers1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(opUsers1Layout.createSequentialGroup()
+        opIncidentsLayout.setVerticalGroup(
+            opIncidentsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(opIncidentsLayout.createSequentialGroup()
                 .addGap(68, 68, 68)
                 .addComponent(jLabel36)
                 .addGap(60, 60, 60)
@@ -1915,7 +2001,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap(607, Short.MAX_VALUE))
         );
 
-        formIncidentsPanel.add(opUsers1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
+        formIncidentsPanel.add(opIncidents, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
 
         jLabel37.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel37.setForeground(new java.awt.Color(255, 255, 255));
@@ -2038,6 +2124,231 @@ public class MainFrame extends javax.swing.JFrame {
 
         mainContent.add(formIncidentsPanel, "formIncidents");
 
+        formCustomersPanel.setBackground(new java.awt.Color(0, 153, 204));
+        formCustomersPanel.setPreferredSize(new java.awt.Dimension(1366, 750));
+        formCustomersPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jLabel38.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 24)); // NOI18N
+        jLabel38.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel38.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel38.setText("Formulario de Clientes - VD Logistics");
+        formCustomersPanel.add(jLabel38, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 40, -1, -1));
+
+        opCustomers.setBackground(new java.awt.Color(0, 153, 153));
+        opCustomers.setAlignmentX(0.0F);
+        opCustomers.setAlignmentY(0.0F);
+        opCustomers.setPreferredSize(new java.awt.Dimension(240, 1100));
+
+        jLabel41.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 20)); // NOI18N
+        jLabel41.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel41.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel41.setText("Operaciones");
+
+        createCustomerButton.setBackground(new java.awt.Color(0, 68, 85));
+        createCustomerButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        createCustomerButton.setForeground(new java.awt.Color(255, 255, 255));
+        createCustomerButton.setText("Añadir Nuevo");
+        createCustomerButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        createCustomerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createCustomerButtonActionPerformed(evt);
+            }
+        });
+
+        updateCustomerButton.setBackground(new java.awt.Color(0, 68, 85));
+        updateCustomerButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        updateCustomerButton.setForeground(new java.awt.Color(255, 255, 255));
+        updateCustomerButton.setText("Editar datos");
+        updateCustomerButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        updateCustomerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateCustomerButtonActionPerformed(evt);
+            }
+        });
+
+        deleteCustomerButton.setBackground(new java.awt.Color(0, 68, 85));
+        deleteCustomerButton.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        deleteCustomerButton.setForeground(new java.awt.Color(255, 255, 255));
+        deleteCustomerButton.setText("Eliminar");
+        deleteCustomerButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        deleteCustomerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteCustomerButtonActionPerformed(evt);
+            }
+        });
+
+        backCustomers.setBackground(new java.awt.Color(3, 121, 157));
+        backCustomers.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        backCustomers.setForeground(new java.awt.Color(255, 255, 255));
+        backCustomers.setText("Volver");
+        backCustomers.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        backCustomers.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                backCustomersActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout opCustomersLayout = new javax.swing.GroupLayout(opCustomers);
+        opCustomers.setLayout(opCustomersLayout);
+        opCustomersLayout.setHorizontalGroup(
+            opCustomersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, opCustomersLayout.createSequentialGroup()
+                .addContainerGap(74, Short.MAX_VALUE)
+                .addGroup(opCustomersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel41, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(createCustomerButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(updateCustomerButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(deleteCustomerButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(80, 80, 80))
+            .addComponent(jSeparator4)
+            .addGroup(opCustomersLayout.createSequentialGroup()
+                .addGap(76, 76, 76)
+                .addComponent(backCustomers, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        opCustomersLayout.setVerticalGroup(
+            opCustomersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(opCustomersLayout.createSequentialGroup()
+                .addGap(68, 68, 68)
+                .addComponent(jLabel41)
+                .addGap(60, 60, 60)
+                .addComponent(createCustomerButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(51, 51, 51)
+                .addComponent(updateCustomerButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(deleteCustomerButton, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(48, 48, 48)
+                .addComponent(backCustomers, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(607, Short.MAX_VALUE))
+        );
+
+        formCustomersPanel.add(opCustomers, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -10, 280, 1100));
+
+        jLabel43.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel43.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel43.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel43.setText("ID:");
+        formCustomersPanel.add(jLabel43, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 125, -1, -1));
+
+        txtCustomerId.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        txtCustomerId.setForeground(new java.awt.Color(0, 0, 0));
+        txtCustomerId.setDisabledTextColor(new java.awt.Color(153, 153, 153));
+        txtCustomerId.setEnabled(false);
+        txtCustomerId.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtCustomerIdActionPerformed(evt);
+            }
+        });
+        formCustomersPanel.add(txtCustomerId, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 120, 280, 30));
+
+        jLabel46.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel46.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel46.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel46.setText("Nombre:");
+        formCustomersPanel.add(jLabel46, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 195, -1, -1));
+        formCustomersPanel.add(txtCustomerFirstName, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 190, 280, 30));
+
+        jLabel44.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel44.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel44.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel44.setText("Apellidos:");
+        formCustomersPanel.add(jLabel44, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 265, -1, -1));
+        formCustomersPanel.add(txtCustomerLastName, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 260, 280, 30));
+
+        jLabel49.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel49.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel49.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel49.setText("Email:");
+        formCustomersPanel.add(jLabel49, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 335, -1, -1));
+        formCustomersPanel.add(txtCustomerEmail, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 330, 280, 30));
+
+        jLabel47.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel47.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel47.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel47.setText("Teléfono:");
+        formCustomersPanel.add(jLabel47, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 405, -1, -1));
+        formCustomersPanel.add(txtCustomerPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 400, 140, 30));
+
+        jLabel50.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel50.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel50.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel50.setText("Dirección:");
+        formCustomersPanel.add(jLabel50, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 475, -1, -1));
+        formCustomersPanel.add(txtCustomerAddress, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 470, 320, 30));
+
+        jLabel48.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
+        jLabel48.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel48.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel48.setText("Info Adicional:");
+        formCustomersPanel.add(jLabel48, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 545, -1, -1));
+
+        txtCustomerAdditional.setBackground(new java.awt.Color(255, 255, 255));
+        formCustomersPanel.add(txtCustomerAdditional, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 540, 280, 30));
+
+        servicesByCustomer.setBackground(new java.awt.Color(0, 153, 153));
+        servicesByCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        servicesByCustomer.setForeground(new java.awt.Color(255, 255, 255));
+        servicesByCustomer.setText("Ver Servicios");
+        servicesByCustomer.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        servicesByCustomer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                servicesByCustomerActionPerformed(evt);
+            }
+        });
+        formCustomersPanel.add(servicesByCustomer, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 630, 160, 30));
+
+        saveDiscardPanel3.setBackground(new java.awt.Color(0, 153, 153));
+        saveDiscardPanel3.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        saveCustomer.setBackground(new java.awt.Color(3, 121, 157));
+        saveCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        saveCustomer.setForeground(new java.awt.Color(255, 255, 255));
+        saveCustomer.setText("Guardar");
+        saveCustomer.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        saveCustomer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveCustomerActionPerformed(evt);
+            }
+        });
+
+        discardCustomer.setBackground(new java.awt.Color(0, 68, 85));
+        discardCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        discardCustomer.setForeground(new java.awt.Color(255, 255, 255));
+        discardCustomer.setText("Cancelar");
+        discardCustomer.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        discardCustomer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                discardCustomerActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout saveDiscardPanel3Layout = new javax.swing.GroupLayout(saveDiscardPanel3);
+        saveDiscardPanel3.setLayout(saveDiscardPanel3Layout);
+        saveDiscardPanel3Layout.setHorizontalGroup(
+            saveDiscardPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(saveDiscardPanel3Layout.createSequentialGroup()
+                .addGap(60, 60, 60)
+                .addComponent(saveCustomer, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 122, Short.MAX_VALUE)
+                .addComponent(discardCustomer, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(60, 60, 60))
+        );
+        saveDiscardPanel3Layout.setVerticalGroup(
+            saveDiscardPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(saveDiscardPanel3Layout.createSequentialGroup()
+                .addGap(38, 38, 38)
+                .addGroup(saveDiscardPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(saveCustomer, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(discardCustomer, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(32, Short.MAX_VALUE))
+        );
+
+        formCustomersPanel.add(saveDiscardPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 680, 500, 110));
+
+        mainContent.add(formCustomersPanel, "formCustomers");
+
         mainScrollPanel.setViewportView(mainContent);
 
         usersMenu.setText("Usuarios");
@@ -2127,6 +2438,11 @@ public class MainFrame extends javax.swing.JFrame {
         customersMenu.setText("Clientes");
 
         jMenuItem8.setText("Alta Nuevo Cliente");
+        jMenuItem8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem8ActionPerformed(evt);
+            }
+        });
         customersMenu.add(jMenuItem8);
 
         jMenuItem9.setText("Listado de Clientes");
@@ -2645,6 +2961,91 @@ public class MainFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_cmbServiceTypeActionPerformed
 
+    private void createCustomerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createCustomerButtonActionPerformed
+        clearForm(formCustomersPanel);
+        enabledDashboardButtons();
+        createCustomerButton.setEnabled(false);
+        //newIncidentFromServiceButton.setEnabled(false);
+        txtCustomerFirstName.requestFocus();
+    }//GEN-LAST:event_createCustomerButtonActionPerformed
+
+    private void updateCustomerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCustomerButtonActionPerformed
+        navigateCard("customers");
+        clearForm(formCustomersPanel);
+        enabledDashboardButtons();
+    }//GEN-LAST:event_updateCustomerButtonActionPerformed
+
+    private void deleteCustomerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCustomerButtonActionPerformed
+        if (!txtCustomerId.getText().isEmpty()) {
+            int confirm = JOptionPane.showConfirmDialog(this, "¿ Estás seguro de eliminar este cliente ?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+            String customerId = txtCustomerId.getText().trim();
+            if (confirm == JOptionPane.YES_OPTION) {
+                DataCustomer.deleteCustomer(this.userEmail, customerId);
+                navigateCard("customers");
+                clearForm(formCustomersPanel);
+                enabledDashboardButtons();
+            }
+        } else {
+            navigateCard("customers");
+            clearForm(formCustomersPanel);
+            enabledDashboardButtons();
+        }
+    }//GEN-LAST:event_deleteCustomerButtonActionPerformed
+
+    private void backCustomersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backCustomersActionPerformed
+        navigateCard("customers");
+        clearForm(formCustomersPanel);
+        enabledDashboardButtons();
+    }//GEN-LAST:event_backCustomersActionPerformed
+
+    private void txtCustomerIdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCustomerIdActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtCustomerIdActionPerformed
+
+    private void servicesByCustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_servicesByCustomerActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_servicesByCustomerActionPerformed
+
+    private void saveCustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCustomerActionPerformed
+        if (txtCustomerId.getText().isEmpty()) {
+            saveCustomer("new");
+        } else {
+            saveCustomer("update");
+            navigateCard("customers");
+            clearForm(formCustomersPanel);
+            enabledDashboardButtons();
+        }
+    }//GEN-LAST:event_saveCustomerActionPerformed
+
+    private void discardCustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_discardCustomerActionPerformed
+        navigateCard("customers");
+        clearForm(formCustomersPanel);
+        enabledDashboardButtons();
+    }//GEN-LAST:event_discardCustomerActionPerformed
+
+    private void customersTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_customersTableMouseClicked
+        int selectedRow = customersTable.getSelectedRow();
+        if (selectedRow != -1 && customersTable.getValueAt(selectedRow, 1) != "No hay clientes") {
+            String customerId = customersTable.getValueAt(selectedRow, 0).toString();
+            Customer customerData = DataCustomer.getCustomerById(customerId);
+            if (customerData != null) {
+                navigateCard("formCustomers");
+                updateCustomerButton.setEnabled(false);
+                showCustomerForm(customerData);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al cargar los datos", "VD Logistics", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_customersTableMouseClicked
+
+    private void jMenuItem8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem8ActionPerformed
+        clearForm(formCustomersPanel);
+        enabledDashboardButtons();
+        createCustomerButton.setEnabled(false);
+        //newIncidentFromServiceButton.setEnabled(false);
+        txtCustomerFirstName.requestFocus();
+    }//GEN-LAST:event_jMenuItem8ActionPerformed
+
     private void deleteFileFromStorage(String fileName, String serviceId) {
         try {
             String bucketName = "vd-logistics.firebasestorage.app";
@@ -2668,10 +3069,10 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }
 
-    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addFileButton;
+    private javax.swing.JButton backCustomers;
     private javax.swing.JButton backIncidents;
     private javax.swing.JButton backServices;
     private javax.swing.JButton backUsers;
@@ -2686,6 +3087,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTable completedTable;
     private javax.swing.JScrollPane confirmedScrollPanel;
     private javax.swing.JTable confirmedTable;
+    private javax.swing.JButton createCustomerButton;
     private javax.swing.JButton createIncidentButton;
     private javax.swing.JButton createServiceButton;
     private javax.swing.JButton createUserButton;
@@ -2695,13 +3097,16 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane customersScrollPanel;
     private javax.swing.JTable customersTable;
     private com.toedter.calendar.JDateChooser dcServiceDate;
+    private javax.swing.JButton deleteCustomerButton;
     private javax.swing.JButton deleteFileButton;
     private javax.swing.JButton deleteIncidentButton;
     private javax.swing.JButton deleteServiceButton;
     private javax.swing.JButton deleteUserButton;
+    private javax.swing.JButton discardCustomer;
     private javax.swing.JButton discardIncident;
     private javax.swing.JButton discardService;
     private javax.swing.JButton discardUser;
+    private javax.swing.JPanel formCustomersPanel;
     private javax.swing.JPanel formIncidentsPanel;
     private javax.swing.JPanel formServicesPanel;
     private javax.swing.JPanel formUsersPanel;
@@ -2741,12 +3146,21 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel36;
     private javax.swing.JLabel jLabel37;
+    private javax.swing.JLabel jLabel38;
     private javax.swing.JLabel jLabel39;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel40;
+    private javax.swing.JLabel jLabel41;
     private javax.swing.JLabel jLabel42;
+    private javax.swing.JLabel jLabel43;
+    private javax.swing.JLabel jLabel44;
     private javax.swing.JLabel jLabel45;
+    private javax.swing.JLabel jLabel46;
+    private javax.swing.JLabel jLabel47;
+    private javax.swing.JLabel jLabel48;
+    private javax.swing.JLabel jLabel49;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel50;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
@@ -2768,6 +3182,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JSeparator jSeparator4;
     private javax.swing.JLabel loadingLabel;
     private javax.swing.JPanel logsPanel;
     private javax.swing.JScrollPane logsScrollPanel;
@@ -2777,9 +3192,10 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane newDateScrollPanel;
     private javax.swing.JTable newDateTable;
     private javax.swing.JButton newIncidentFromServiceButton;
+    private javax.swing.JPanel opCustomers;
+    private javax.swing.JPanel opIncidents;
     private javax.swing.JPanel opServices;
     private javax.swing.JPanel opUsers;
-    private javax.swing.JPanel opUsers1;
     private javax.swing.JList<String> operatorFileList;
     private javax.swing.JScrollPane operatorFilesJSPanel;
     private javax.swing.JPanel otherServicesPanel;
@@ -2792,20 +3208,30 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton processIncidentButton;
     private javax.swing.JScrollPane processedIncidentsScrollPanel;
     private javax.swing.JTable processedIncidentsTable;
+    private javax.swing.JButton saveCustomer;
     private javax.swing.JPanel saveDiscardPanel;
     private javax.swing.JPanel saveDiscardPanel1;
     private javax.swing.JPanel saveDiscardPanel2;
+    private javax.swing.JPanel saveDiscardPanel3;
     private javax.swing.JButton saveIncident;
     private javax.swing.JButton saveService;
     private javax.swing.JButton saveUser;
     private javax.swing.JScrollPane serviceCommentsJSPanel;
     private javax.swing.JScrollPane serviceDescriptionJSPanel;
+    private javax.swing.JButton servicesByCustomer;
     private javax.swing.JMenu servicesMenu;
     private javax.swing.JPanel servicesPanel;
     private javax.swing.JList<String> sharedFileList;
     private javax.swing.JScrollPane sharedFilesJSPanel;
     private javax.swing.JSpinner spServiceHour;
     private javax.swing.JSpinner spServiceMinute;
+    private javax.swing.JTextField txtCustomerAdditional;
+    private javax.swing.JTextField txtCustomerAddress;
+    private javax.swing.JTextField txtCustomerEmail;
+    private javax.swing.JTextField txtCustomerFirstName;
+    private javax.swing.JTextField txtCustomerId;
+    private javax.swing.JTextField txtCustomerLastName;
+    private javax.swing.JTextField txtCustomerPhone;
     private javax.swing.JTextField txtIncidentDate;
     private javax.swing.JTextArea txtIncidentDescription;
     private javax.swing.JTextField txtIncidentId;
@@ -2820,6 +3246,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTextField txtUserLastName;
     private javax.swing.JPasswordField txtUserPassword;
     private javax.swing.JTextField txtUserPhone;
+    private javax.swing.JButton updateCustomerButton;
     private javax.swing.JButton updateIncidentButton;
     private javax.swing.JButton updateServiceButton;
     private javax.swing.JButton updateUserButton;

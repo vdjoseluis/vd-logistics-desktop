@@ -2,8 +2,10 @@ package com.vdjoseluis.vdlogistics.firebase.data;
 
 import com.google.cloud.firestore.*;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
+import com.vdjoseluis.vdlogistics.models.Customer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -113,6 +115,86 @@ public class DataCustomer {
                 });
             }
         });
+    }
+
+    public static Customer getCustomerById(String customerId) {
+        try {
+            DocumentSnapshot doc = db.collection("customers").document(customerId).get().get();
+
+            if (doc.exists()) {
+                String id = doc.getId();
+                String firstName = doc.getString("firstName");
+                String lastName = doc.getString("lastName");
+                String email = doc.getString("email");
+                String phone = doc.getString("phone");
+                String address = doc.getString("address");
+                String addressAdditional = doc.getString("addressAdditional");
+
+                return new Customer(id, firstName, lastName, email, phone, address, addressAdditional);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error al obtener servicio: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public static boolean createCustomer(Customer customer, String userEmail) {
+        try {
+            DocumentReference docRef = db.collection("customers").document();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("firstName", customer.getFirstName());
+            data.put("lastName", customer.getLastName());
+            data.put("email", customer.getEmail());
+            data.put("phone", customer.getPhone());
+            data.put("address", customer.getAddress());
+            data.put("addressAdditional", customer.getAdditional());
+
+            docRef.set(data);
+            DataLog.registerLog(userEmail, "Registra nuevo cliente", docRef.getId());
+
+            System.out.println("✅ Cliente registrado correctamente ");
+            return true;
+        } catch (Exception e) {
+            System.err.println("❌ Error registrando cliente: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean updateCustomer(Customer customer, String userEmail) {
+        try {
+            DocumentReference docRef = db.collection("customers").document(customer.getId());
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("firstName", customer.getFirstName());
+            data.put("lastName", customer.getLastName());
+            data.put("email", customer.getEmail());
+            data.put("phone", customer.getPhone());
+            data.put("address", customer.getAddress());
+            data.put("addressAdditional", customer.getAdditional());
+
+            docRef.update(data).get();
+            DataLog.registerLog(userEmail, "Actualiza datos clientes", docRef.getId());
+
+            System.out.println("✅ Cliente actualizado correctamente ");
+            return true;
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error creando servicio: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    public static boolean deleteCustomer(String userEmail, String customerId) {
+        try {
+            db.collection("customers").document(customerId).delete().get();
+            //FileService.deleteServiceFiles(customerId);
+            DataLog.registerLog(userEmail, "Elimina cliente", customerId);
+            System.out.println("Cliente eliminado correctamente");
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error al eliminar cliente: " + e.getMessage());
+            return false;
+        }
     }
 
 }
