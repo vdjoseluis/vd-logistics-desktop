@@ -1,5 +1,6 @@
 package com.vdjoseluis.vdlogistics.ui;
 
+import com.google.cloud.firestore.GeoPoint;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
@@ -10,6 +11,8 @@ import com.vdjoseluis.vdlogistics.firebase.data.DataService;
 import com.vdjoseluis.vdlogistics.firebase.data.DataUser;
 import com.vdjoseluis.vdlogistics.firebase.storage.FileService;
 import com.vdjoseluis.vdlogistics.firebase.storage.FileUploader;
+import com.vdjoseluis.vdlogistics.maps.GoogleMapsService;
+import com.vdjoseluis.vdlogistics.maps.GoogleMapsService.GeocodingResult;
 import com.vdjoseluis.vdlogistics.models.Customer;
 import com.vdjoseluis.vdlogistics.models.Incident;
 import com.vdjoseluis.vdlogistics.models.Service;
@@ -51,6 +54,8 @@ public class MainFrame extends javax.swing.JFrame {
     private final String userEmail;
     private final DefaultListModel<String> tempListModel = new DefaultListModel<>();
     private final List<File> tempFiles = new ArrayList<>();
+    private GeoPoint geoLocation;
+    private String cityService;
 
     public MainFrame(String email) {
         this.setContentPane(background);
@@ -328,9 +333,6 @@ public class MainFrame extends javax.swing.JFrame {
         txtCustomerPhone.setText(customerData.getPhone());
         txtCustomerAddress.setText(customerData.getAddress());
         txtCustomerAdditional.setText(customerData.getAdditional());
-
-//        processIncidentButton.setEnabled(false);
-//        processIncidentButton.setEnabled(!fromService && incidentData.getStatus().equals("Pendiente"));
     }
 
     private void saveCustomer(String action) {
@@ -342,18 +344,19 @@ public class MainFrame extends javax.swing.JFrame {
         String address = txtCustomerAddress.getText();
         String additional = txtCustomerAdditional.getText();
 
+
         if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "VD Logistics", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        Customer newCustomer = new Customer(id, firstName, lastName, email, phone, address, additional);
+        Customer newCustomer = new Customer(id, firstName, lastName, email, phone, address, additional, cityService);
         boolean success = false;
 
         if ("new".equals(action)) {
-            success = DataCustomer.createCustomer(newCustomer, userEmail);
+            success = DataCustomer.createCustomer(newCustomer, userEmail, geoLocation);
         } else if ("update".equals(action)) {
-            success = DataCustomer.updateCustomer(newCustomer, userEmail);
+            success = DataCustomer.updateCustomer(newCustomer, userEmail, geoLocation);
         }
 
         if (success) {
@@ -364,6 +367,8 @@ public class MainFrame extends javax.swing.JFrame {
         } else {
             JOptionPane.showMessageDialog(this, "Error al registrar cliente.", "VD Logistics", JOptionPane.ERROR_MESSAGE);
         }
+        geoLocation = null;
+        cityService = null;
     }
 
     /**
@@ -2250,49 +2255,49 @@ public class MainFrame extends javax.swing.JFrame {
                 txtCustomerIdActionPerformed(evt);
             }
         });
-        formCustomersPanel.add(txtCustomerId, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 120, 280, 30));
+        formCustomersPanel.add(txtCustomerId, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 120, 280, 30));
 
         jLabel46.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel46.setForeground(new java.awt.Color(255, 255, 255));
         jLabel46.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel46.setText("Nombre:");
         formCustomersPanel.add(jLabel46, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 195, -1, -1));
-        formCustomersPanel.add(txtCustomerFirstName, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 190, 280, 30));
+        formCustomersPanel.add(txtCustomerFirstName, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 190, 280, 30));
 
         jLabel44.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel44.setForeground(new java.awt.Color(255, 255, 255));
         jLabel44.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel44.setText("Apellidos:");
         formCustomersPanel.add(jLabel44, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 265, -1, -1));
-        formCustomersPanel.add(txtCustomerLastName, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 260, 280, 30));
+        formCustomersPanel.add(txtCustomerLastName, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 260, 280, 30));
 
         jLabel49.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel49.setForeground(new java.awt.Color(255, 255, 255));
         jLabel49.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel49.setText("Email:");
         formCustomersPanel.add(jLabel49, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 335, -1, -1));
-        formCustomersPanel.add(txtCustomerEmail, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 330, 280, 30));
+        formCustomersPanel.add(txtCustomerEmail, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 330, 280, 30));
 
         jLabel47.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel47.setForeground(new java.awt.Color(255, 255, 255));
         jLabel47.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel47.setText("Teléfono:");
         formCustomersPanel.add(jLabel47, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 405, -1, -1));
-        formCustomersPanel.add(txtCustomerPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 400, 140, 30));
+        formCustomersPanel.add(txtCustomerPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 400, 140, 30));
 
         jLabel50.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel50.setForeground(new java.awt.Color(255, 255, 255));
         jLabel50.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel50.setText("Dirección:");
         formCustomersPanel.add(jLabel50, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 475, -1, -1));
-        formCustomersPanel.add(txtCustomerAddress, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 470, 320, 30));
+        formCustomersPanel.add(txtCustomerAddress, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 470, 360, 30));
 
         jLabel48.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel48.setForeground(new java.awt.Color(255, 255, 255));
         jLabel48.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel48.setText("Info Adicional:");
         formCustomersPanel.add(jLabel48, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 545, -1, -1));
-        formCustomersPanel.add(txtCustomerAdditional, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 540, 280, 30));
+        formCustomersPanel.add(txtCustomerAdditional, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 540, 280, 30));
 
         servicesByCustomer.setBackground(new java.awt.Color(0, 153, 153));
         servicesByCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
@@ -3132,6 +3137,31 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_servicesByCustomerActionPerformed
 
     private void saveCustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCustomerActionPerformed
+        String rawAddress = txtCustomerAddress.getText().trim();
+        GeocodingResult result = GoogleMapsService.geocodeAddress(rawAddress);
+
+        if (result == null) {
+            JOptionPane.showMessageDialog(this, "No se pudo validar la dirección. Verifica que sea correcta.", "Dirección no válida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "¿Es esta la dirección correcta?\n\n"
+                + result.formattedAddress + "\n"
+                + "Lat: " + result.location.getLatitude() + " - Lng: " + result.location.getLongitude(),
+                "Confirmar dirección",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        txtCustomerAddress.setText(result.formattedAddress);
+        geoLocation = new GeoPoint(result.location.getLatitude(), result.location.getLongitude());
+        cityService = result.city;
+
         if (txtCustomerId.getText().isEmpty()) {
             saveCustomer("new");
         } else {
@@ -3168,7 +3198,6 @@ public class MainFrame extends javax.swing.JFrame {
         clearForm(formCustomersPanel);
         enabledDashboardButtons();
         createCustomerButton.setEnabled(false);
-        //newIncidentFromServiceButton.setEnabled(false);
         txtCustomerFirstName.requestFocus();
     }//GEN-LAST:event_jMenuItem8ActionPerformed
 

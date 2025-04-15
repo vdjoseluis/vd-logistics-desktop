@@ -9,8 +9,9 @@ public class Customer {
     private String phone;
     private String address;
     private String additional;
-
-    public Customer(String id, String firstName, String lastName, String email, String phone, String address, String additional) {
+    private String city;
+    
+    public Customer(String id, String firstName, String lastName, String email, String phone, String address, String additional, String city) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -18,6 +19,7 @@ public class Customer {
         this.phone = phone;
         this.address = address;
         this.additional = additional;
+        this.city = city;
     }
 
     public String getId() {
@@ -74,5 +76,13 @@ public class Customer {
 
     public void setAdditional(String additional) {
         this.additional = additional;
+    }
+    
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 }

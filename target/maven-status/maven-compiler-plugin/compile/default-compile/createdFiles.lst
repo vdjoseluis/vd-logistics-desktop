@@ -2,7 +2,6 @@ com\vdjoseluis\vdlogistics\models\Incident.class
 com\vdjoseluis\vdlogistics\firebase\data\DataIncident.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$5.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$17.class
-com\vdjoseluis\vdlogistics\maps\GoogleMapsParser.class
 com\vdjoseluis\vdlogistics\firebase\FirebaseAuthService.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$47.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$57.class
@@ -15,7 +14,6 @@ com\vdjoseluis\vdlogistics\firebase\storage\FileUploader.class
 com\vdjoseluis\vdlogistics\ui\LoginFrame.class
 com\vdjoseluis\vdlogistics\models\User.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$58.class
-com\vdjoseluis\vdlogistics\maps\GoogleMapsLinkResolver.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$41.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$51.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$45.class
@@ -23,7 +21,6 @@ com\vdjoseluis\vdlogistics\ui\MainFrame$7.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$22.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$12.class
 com\vdjoseluis\vdlogistics\ui\MainFrame$52.class
-com\vdjoseluis\vdlogistics\maps\GoogleMapsViewer.class
 com\vdjoseluis\vdlogistics\firebase\data\DataCustomer.class
 com\vdjoseluis\vdlogistics\firebase\data\DataIncident$1.class
 com\vdjoseluis\vdlogistics\ui\LoginFrame$4.class

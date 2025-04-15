@@ -135,8 +135,9 @@ public class DataCustomer {
                 String phone = doc.getString("phone");
                 String address = doc.getString("address");
                 String addressAdditional = doc.getString("addressAdditional");
+                String city = doc.getString("city");
 
-                return new Customer(id, firstName, lastName, email, phone, address, addressAdditional);
+                return new Customer(id, firstName, lastName, email, phone, address, addressAdditional, city);
             }
         } catch (InterruptedException | ExecutionException e) {
             System.err.println("❌ Error al obtener servicio: " + e.getMessage());
@@ -161,7 +162,7 @@ public class DataCustomer {
         return customerIds;
     }
 
-    public static boolean createCustomer(Customer customer, String userEmail) {
+    public static boolean createCustomer(Customer customer, String userEmail, GeoPoint geoLocation) {
         try {
             DocumentReference docRef = db.collection("customers").document();
 
@@ -172,6 +173,8 @@ public class DataCustomer {
             data.put("phone", customer.getPhone());
             data.put("address", customer.getAddress());
             data.put("addressAdditional", customer.getAdditional());
+            data.put("location", geoLocation);
+            data.put("city", customer.getCity());
 
             docRef.set(data);
             DataLog.registerLog(userEmail, "Registra nuevo cliente", docRef.getId());
@@ -184,7 +187,7 @@ public class DataCustomer {
         }
     }
 
-    public static boolean updateCustomer(Customer customer, String userEmail) {
+    public static boolean updateCustomer(Customer customer, String userEmail, GeoPoint geoLocation) {
         try {
             DocumentReference docRef = db.collection("customers").document(customer.getId());
 
@@ -195,6 +198,8 @@ public class DataCustomer {
             data.put("phone", customer.getPhone());
             data.put("address", customer.getAddress());
             data.put("addressAdditional", customer.getAdditional());
+            data.put("location", geoLocation);
+            data.put("city", customer.getCity());
 
             docRef.update(data).get();
             DataLog.registerLog(userEmail, "Actualiza datos clientes", docRef.getId());

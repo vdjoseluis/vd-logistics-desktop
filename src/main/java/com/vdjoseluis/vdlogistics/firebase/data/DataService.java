@@ -121,11 +121,7 @@ public class DataService {
     private static String getCityFromCustomer(DocumentReference ref) {
         try {
             DocumentSnapshot doc = ref.get().get();
-            String address = doc.getString("address");
-            if (address != null && address.contains(",")) {
-                String[] parts = address.split(",");
-                return parts[parts.length - 1].trim();
-            }
+            return doc.getString("city");
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }

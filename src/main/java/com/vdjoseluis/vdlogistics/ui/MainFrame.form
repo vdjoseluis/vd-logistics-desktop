@@ -3210,7 +3210,7 @@
                   </Events>
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                      <AbsoluteConstraints x="760" y="120" width="280" height="30"/>
+                      <AbsoluteConstraints x="730" y="120" width="280" height="30"/>
                     </Constraint>
                   </Constraints>
                 </Component>
@@ -3234,7 +3234,7 @@
                 <Component class="javax.swing.JTextField" name="txtCustomerFirstName">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                      <AbsoluteConstraints x="760" y="190" width="280" height="30"/>
+                      <AbsoluteConstraints x="730" y="190" width="280" height="30"/>
                     </Constraint>
                   </Constraints>
                 </Component>
@@ -3258,7 +3258,7 @@
                 <Component class="javax.swing.JTextField" name="txtCustomerLastName">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                      <AbsoluteConstraints x="760" y="260" width="280" height="30"/>
+                      <AbsoluteConstraints x="730" y="260" width="280" height="30"/>
                     </Constraint>
                   </Constraints>
                 </Component>
@@ -3282,7 +3282,7 @@
                 <Component class="javax.swing.JTextField" name="txtCustomerEmail">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                      <AbsoluteConstraints x="760" y="330" width="280" height="30"/>
+                      <AbsoluteConstraints x="730" y="330" width="280" height="30"/>
                     </Constraint>
                   </Constraints>
                 </Component>
@@ -3306,7 +3306,7 @@
                 <Component class="javax.swing.JTextField" name="txtCustomerPhone">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                      <AbsoluteConstraints x="760" y="400" width="140" height="30"/>
+                      <AbsoluteConstraints x="730" y="400" width="140" height="30"/>
                     </Constraint>
                   </Constraints>
                 </Component>
@@ -3330,7 +3330,7 @@
                 <Component class="javax.swing.JTextField" name="txtCustomerAddress">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                      <AbsoluteConstraints x="760" y="470" width="320" height="30"/>
+                      <AbsoluteConstraints x="730" y="470" width="360" height="30"/>
                     </Constraint>
                   </Constraints>
                 </Component>
@@ -3354,7 +3354,7 @@
                 <Component class="javax.swing.JTextField" name="txtCustomerAdditional">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-                      <AbsoluteConstraints x="760" y="540" width="280" height="30"/>
+                      <AbsoluteConstraints x="730" y="540" width="280" height="30"/>
                     </Constraint>
                   </Constraints>
                 </Component>
