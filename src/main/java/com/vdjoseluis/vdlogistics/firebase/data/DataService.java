@@ -113,7 +113,6 @@ public class DataService {
             String lastName = doc.getString("lastName");
             return (firstName != null && lastName != null) ? firstName + " " + lastName : "Desconocido";
         } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
             return "Desconocido";
         }
     }
@@ -123,7 +122,6 @@ public class DataService {
             DocumentSnapshot doc = ref.get().get();
             return doc.getString("city");
         } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
         }
         return "Sin ciudad";
     }
@@ -147,7 +145,12 @@ public class DataService {
                 String description = doc.getString("description");
                 String comments = (doc.contains("comments")) ? doc.getString("comments") : "No hay comentarios.";
 
-                return new Service(id, date, operator, type, customer, status, description, comments);
+                Date proposedDate = null;
+                if (doc.contains("proposedDate")) {
+                    proposedDate = doc.getTimestamp("proposedDate").toDate();
+                }
+
+                return new Service(id, date, operator, type, customer, status, description, comments, proposedDate);
             }
         } catch (InterruptedException | ExecutionException e) {
             System.err.println("❌ Error al obtener servicio: " + e.getMessage());
@@ -211,9 +214,8 @@ public class DataService {
                 model.addRow(new Object[]{"", "No hay servicios", "", "", ""});
             }
 
-        } catch (Exception e) {
+        } catch (InterruptedException | ExecutionException e) {
             System.err.println("❌ Error al obtener servicios: " + e.getMessage());
-            e.printStackTrace();
         }
 
         SwingUtilities.invokeLater(() -> {
@@ -277,6 +279,25 @@ public class DataService {
         }
     }
 
+    public static boolean changeServiceDate(String serviceId, String userEmail, Date proposedDate) {
+        try {
+            DocumentReference docRef = db.collection("services").document(serviceId);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("date", proposedDate);
+            data.put("status", "Confirmado");
+
+            docRef.update(data).get();
+            DataLog.registerLog(userEmail, "Actualiza servicio", docRef.getId());
+
+            System.out.println("✅ Servicio actualizado correctamente ");
+            return true;
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("❌ Error creando servicio: " + e.getMessage());
+            return false;
+        }
+    }
+
     private static Timestamp getTimestamp(JDateChooser jDateChooser, JSpinner hourSelector, JSpinner minuteSelector) {
         try {
             Date selectedDate = jDateChooser.getDate();
@@ -302,7 +323,7 @@ public class DataService {
             DataLog.registerLog(userEmail, "Elimina servicio", serviceId);
             System.out.println("Servicio eliminado correctamente");
             return true;
-        } catch (Exception e) {
+        } catch (InterruptedException | ExecutionException e) {
             System.err.println("Error al eliminar servicio: " + e.getMessage());
             return false;
         }

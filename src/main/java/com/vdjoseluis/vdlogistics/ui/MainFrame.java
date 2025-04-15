@@ -19,17 +19,22 @@ import com.vdjoseluis.vdlogistics.models.Service;
 import com.vdjoseluis.vdlogistics.models.User;
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.HeadlessException;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import javax.imageio.ImageIO;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
@@ -56,11 +61,18 @@ public class MainFrame extends javax.swing.JFrame {
     private final List<File> tempFiles = new ArrayList<>();
     private GeoPoint geoLocation;
     private String cityService;
+    private String lastInputAddress = null;
 
     public MainFrame(String email) {
         this.setContentPane(background);
 
         initComponents();
+        try {
+            Image icon = ImageIO.read(getClass().getResource("/images/logo.png"));
+            setIconImage(icon);
+        } catch (IOException e) {
+            System.err.println("No se pudo cargar el ícono: " + e.getMessage());
+        }
 
         incidentIdToService.setVisible(false);
 
@@ -104,6 +116,11 @@ public class MainFrame extends javax.swing.JFrame {
         DataUser.listenForOperatorNames(cmbServiceOperator);
         DataUser.listenForOperatorNames(cmbIncidentOperator);
         DataCustomer.listenForCustomerNames(cmbServiceCustomer);
+    }
+
+    private String getFormattedDate(Date date) {
+        SimpleDateFormat formatDate = new SimpleDateFormat("dd-MM-yyyy   /  HH:mm");
+        return formatDate.format(date);
     }
 
     private void enabledDashboardButtons() {
@@ -188,6 +205,19 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void showServiceForm(Service serviceData, boolean incident) {
+        if (serviceData.getStatus().equals("Propuesta nueva fecha")) {
+            String proposedDate = getFormattedDate(serviceData.getProposedDate());
+            int confirm = JOptionPane.showConfirmDialog(this, "¿ Aceptar nueva fecha propuesta: " + proposedDate + " ?", "VD Logistics", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean success = DataService.changeServiceDate(serviceData.getId(), userEmail, serviceData.getProposedDate());
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Nueva fecha actualizada correctamente", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
+                    navigateCard("services");
+                    clearForm(formServicesPanel);
+                    enabledDashboardButtons();
+                }
+            }
+        }
         newIncidentFromServiceButton.setEnabled(false);
         txtServiceId.setText(serviceData.getId());
         FileService fileOpener = new FileService(sharedFileList, operatorFileList, serviceData.getId());
@@ -247,7 +277,7 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        Service newService = new Service(id, date, operatorName, type, customerName, status, description, comments);
+        Service newService = new Service(id, date, operatorName, type, customerName, status, description, comments, null);
         boolean success = false;
         boolean successIncident = false;
 
@@ -333,6 +363,7 @@ public class MainFrame extends javax.swing.JFrame {
         txtCustomerPhone.setText(customerData.getPhone());
         txtCustomerAddress.setText(customerData.getAddress());
         txtCustomerAdditional.setText(customerData.getAdditional());
+        lastInputAddress = txtCustomerAddress.getText();
     }
 
     private void saveCustomer(String action) {
@@ -343,7 +374,6 @@ public class MainFrame extends javax.swing.JFrame {
         String phone = txtCustomerPhone.getText();
         String address = txtCustomerAddress.getText();
         String additional = txtCustomerAdditional.getText();
-
 
         if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "VD Logistics", JOptionPane.WARNING_MESSAGE);
@@ -369,6 +399,7 @@ public class MainFrame extends javax.swing.JFrame {
         }
         geoLocation = null;
         cityService = null;
+        lastInputAddress = null;
     }
 
     /**
@@ -541,6 +572,8 @@ public class MainFrame extends javax.swing.JFrame {
         txtCustomerAddress = new javax.swing.JTextField();
         jLabel48 = new javax.swing.JLabel();
         txtCustomerAdditional = new javax.swing.JTextField();
+        jLabel53 = new javax.swing.JLabel();
+        btnOpenMaps = new javax.swing.JButton();
         servicesByCustomer = new javax.swing.JButton();
         saveDiscardPanel3 = new javax.swing.JPanel();
         saveCustomer = new javax.swing.JButton();
@@ -1350,7 +1383,7 @@ public class MainFrame extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 14;
+        gridBagConstraints.gridwidth = 18;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(40, 310, 0, 0);
         formServicesPanel.add(jLabel20, gridBagConstraints);
@@ -1487,7 +1520,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(backServices, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(30, 30, 30)
                 .addComponent(incidentIdToService, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(177, Short.MAX_VALUE))
+                .addContainerGap(578, Short.MAX_VALUE))
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1515,20 +1548,21 @@ public class MainFrame extends javax.swing.JFrame {
         dcServiceDate.setBackground(new java.awt.Color(255, 255, 255));
         dcServiceDate.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridheight = 3;
         gridBagConstraints.ipadx = 113;
         gridBagConstraints.ipady = 11;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(31, 60, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(31, 59, 0, 0);
         formServicesPanel.add(dcServiceDate, gridBagConstraints);
 
         jLabel31.setFont(new java.awt.Font("Arial Rounded MT Bold", 1, 24)); // NOI18N
         jLabel31.setForeground(new java.awt.Color(255, 255, 255));
         jLabel31.setText("/");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 11;
+        gridBagConstraints.gridx = 14;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.ipadx = 2;
@@ -1540,9 +1574,9 @@ public class MainFrame extends javax.swing.JFrame {
         spServiceHour.setModel(new SpinnerNumberModel(8, 8, 20, 1));
         spServiceHour.setEditor(new JSpinner.NumberEditor(spServiceHour, "00"));
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 12;
+        gridBagConstraints.gridx = 16;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.gridheight = 3;
         gridBagConstraints.ipadx = 22;
         gridBagConstraints.ipady = 10;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -1553,7 +1587,7 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel30.setForeground(new java.awt.Color(255, 255, 255));
         jLabel30.setText(":");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 13;
+        gridBagConstraints.gridx = 17;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -1564,10 +1598,10 @@ public class MainFrame extends javax.swing.JFrame {
         spServiceMinute.setModel(new SpinnerNumberModel(0, 0, 59, 1));
         spServiceMinute.setEditor(new JSpinner.NumberEditor(spServiceMinute, "00"));
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 23;
+        gridBagConstraints.gridx = 27;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 24;
-        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.gridwidth = 28;
+        gridBagConstraints.gridheight = 3;
         gridBagConstraints.ipadx = 22;
         gridBagConstraints.ipady = 10;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -1592,17 +1626,17 @@ public class MainFrame extends javax.swing.JFrame {
         serviceDescriptionJSPanel.setViewportView(txtServiceDescription);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 4;
-        gridBagConstraints.gridwidth = 38;
+        gridBagConstraints.gridwidth = 45;
         gridBagConstraints.gridheight = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.ipadx = 398;
-        gridBagConstraints.ipady = 56;
+        gridBagConstraints.ipady = 147;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 186);
+        gridBagConstraints.insets = new java.awt.Insets(20, 59, 0, 186);
         formServicesPanel.add(serviceDescriptionJSPanel, gridBagConstraints);
 
         jLabel24.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
@@ -1620,14 +1654,13 @@ public class MainFrame extends javax.swing.JFrame {
         cmbServiceOperator.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceOperator.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridwidth = 30;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.ipadx = 20;
         gridBagConstraints.ipady = 6;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(20, 59, 0, 0);
         formServicesPanel.add(cmbServiceOperator, gridBagConstraints);
 
         jLabel25.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
@@ -1652,14 +1685,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 8;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.ipadx = 20;
         gridBagConstraints.ipady = 6;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(20, 59, 0, 0);
         formServicesPanel.add(cmbServiceType, gridBagConstraints);
 
         jLabel28.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
@@ -1678,14 +1711,13 @@ public class MainFrame extends javax.swing.JFrame {
         cmbServiceCustomer.setBackground(new java.awt.Color(255, 255, 255));
         cmbServiceCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 10;
-        gridBagConstraints.gridwidth = 30;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.ipadx = 20;
         gridBagConstraints.ipady = 6;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(20, 59, 0, 0);
         formServicesPanel.add(cmbServiceCustomer, gridBagConstraints);
 
         jLabel26.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
@@ -1705,14 +1737,14 @@ public class MainFrame extends javax.swing.JFrame {
         cmbServiceStatus.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         cmbServiceStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Pendiente", "Confirmado", "Incidencia", "Finalizado", "Pendiente Finalización", "Propuesta nueva fecha", " " }));
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 12;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 5;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.ipadx = 20;
         gridBagConstraints.ipady = 6;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(20, 59, 0, 0);
         formServicesPanel.add(cmbServiceStatus, gridBagConstraints);
 
         jLabel32.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
@@ -1734,17 +1766,17 @@ public class MainFrame extends javax.swing.JFrame {
         serviceCommentsJSPanel.setViewportView(txtServiceComments);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 14;
-        gridBagConstraints.gridwidth = 38;
+        gridBagConstraints.gridwidth = 45;
         gridBagConstraints.gridheight = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.ipadx = 398;
-        gridBagConstraints.ipady = 56;
+        gridBagConstraints.ipady = 147;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 186);
+        gridBagConstraints.insets = new java.awt.Insets(20, 59, 0, 186);
         formServicesPanel.add(serviceCommentsJSPanel, gridBagConstraints);
 
         jLabel29.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
@@ -1771,17 +1803,17 @@ public class MainFrame extends javax.swing.JFrame {
         sharedFilesJSPanel.setViewportView(sharedFileList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 16;
-        gridBagConstraints.gridwidth = 38;
+        gridBagConstraints.gridwidth = 45;
         gridBagConstraints.gridheight = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.ipadx = 398;
-        gridBagConstraints.ipady = 58;
+        gridBagConstraints.ipady = 149;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 186);
+        gridBagConstraints.insets = new java.awt.Insets(20, 59, 0, 186);
         formServicesPanel.add(sharedFilesJSPanel, gridBagConstraints);
 
         deleteFileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/delete-filled.png"))); // NOI18N
@@ -1823,14 +1855,14 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel33.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel33.setForeground(new java.awt.Color(255, 255, 255));
         jLabel33.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel33.setText("Archivos adjuntos:");
+        jLabel33.setText("Añadidos por el operario:");
         jLabel33.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 19;
-        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.gridwidth = 10;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(25, 270, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(21, 220, 0, 0);
         formServicesPanel.add(jLabel33, gridBagConstraints);
 
         operatorFilesJSPanel.setPreferredSize(new java.awt.Dimension(280, 60));
@@ -1844,17 +1876,17 @@ public class MainFrame extends javax.swing.JFrame {
         operatorFilesJSPanel.setViewportView(operatorFileList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 10;
+        gridBagConstraints.gridx = 11;
         gridBagConstraints.gridy = 19;
-        gridBagConstraints.gridwidth = 38;
+        gridBagConstraints.gridwidth = 45;
         gridBagConstraints.gridheight = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.ipadx = 398;
-        gridBagConstraints.ipady = 58;
+        gridBagConstraints.ipady = 150;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(20, 60, 0, 186);
+        gridBagConstraints.insets = new java.awt.Insets(20, 59, 0, 186);
         formServicesPanel.add(operatorFilesJSPanel, gridBagConstraints);
 
         saveDiscardPanel1.setBackground(new java.awt.Color(0, 153, 153));
@@ -1906,11 +1938,11 @@ public class MainFrame extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 21;
-        gridBagConstraints.gridwidth = 23;
+        gridBagConstraints.gridwidth = 27;
         gridBagConstraints.ipadx = 116;
         gridBagConstraints.ipady = 20;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(20, 290, 20, 0);
+        gridBagConstraints.insets = new java.awt.Insets(20, 290, 0, 0);
         formServicesPanel.add(saveDiscardPanel1, gridBagConstraints);
 
         mainContent.add(formServicesPanel, "formServices");
@@ -2255,49 +2287,72 @@ public class MainFrame extends javax.swing.JFrame {
                 txtCustomerIdActionPerformed(evt);
             }
         });
-        formCustomersPanel.add(txtCustomerId, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 120, 280, 30));
+        formCustomersPanel.add(txtCustomerId, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 120, 280, 30));
 
         jLabel46.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel46.setForeground(new java.awt.Color(255, 255, 255));
         jLabel46.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel46.setText("Nombre:");
         formCustomersPanel.add(jLabel46, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 195, -1, -1));
-        formCustomersPanel.add(txtCustomerFirstName, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 190, 280, 30));
+        formCustomersPanel.add(txtCustomerFirstName, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 190, 280, 30));
 
         jLabel44.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel44.setForeground(new java.awt.Color(255, 255, 255));
         jLabel44.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel44.setText("Apellidos:");
         formCustomersPanel.add(jLabel44, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 265, -1, -1));
-        formCustomersPanel.add(txtCustomerLastName, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 260, 280, 30));
+        formCustomersPanel.add(txtCustomerLastName, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 260, 280, 30));
 
         jLabel49.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel49.setForeground(new java.awt.Color(255, 255, 255));
         jLabel49.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel49.setText("Email:");
         formCustomersPanel.add(jLabel49, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 335, -1, -1));
-        formCustomersPanel.add(txtCustomerEmail, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 330, 280, 30));
+        formCustomersPanel.add(txtCustomerEmail, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 330, 280, 30));
 
         jLabel47.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel47.setForeground(new java.awt.Color(255, 255, 255));
         jLabel47.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel47.setText("Teléfono:");
         formCustomersPanel.add(jLabel47, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 405, -1, -1));
-        formCustomersPanel.add(txtCustomerPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 400, 140, 30));
+        formCustomersPanel.add(txtCustomerPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 400, 140, 30));
 
         jLabel50.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel50.setForeground(new java.awt.Color(255, 255, 255));
         jLabel50.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel50.setText("Dirección:");
         formCustomersPanel.add(jLabel50, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 475, -1, -1));
-        formCustomersPanel.add(txtCustomerAddress, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 470, 360, 30));
+
+        txtCustomerAddress.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                txtCustomerAddressPropertyChange(evt);
+            }
+        });
+        formCustomersPanel.add(txtCustomerAddress, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 470, 370, 30));
 
         jLabel48.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 16)); // NOI18N
         jLabel48.setForeground(new java.awt.Color(255, 255, 255));
         jLabel48.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel48.setText("Info Adicional:");
         formCustomersPanel.add(jLabel48, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 545, -1, -1));
-        formCustomersPanel.add(txtCustomerAdditional, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 540, 280, 30));
+        formCustomersPanel.add(txtCustomerAdditional, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 540, 140, 30));
+
+        jLabel53.setFont(new java.awt.Font("Arial Rounded MT Bold", 2, 13)); // NOI18N
+        jLabel53.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel53.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel53.setText("ej: casa, Piso 2º 2ª, etc...");
+        formCustomersPanel.add(jLabel53, new org.netbeans.lib.awtextra.AbsoluteConstraints(865, 545, -1, -1));
+
+        btnOpenMaps.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/googlemaps.png"))); // NOI18N
+        btnOpenMaps.setToolTipText("Abrir Google Maps");
+        btnOpenMaps.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnOpenMaps.setPreferredSize(new java.awt.Dimension(40, 40));
+        btnOpenMaps.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnOpenMapsActionPerformed(evt);
+            }
+        });
+        formCustomersPanel.add(btnOpenMaps, new org.netbeans.lib.awtextra.AbsoluteConstraints(1050, 535, 40, 40));
 
         servicesByCustomer.setBackground(new java.awt.Color(0, 153, 153));
         servicesByCustomer.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
@@ -3060,7 +3115,7 @@ public class MainFrame extends javax.swing.JFrame {
         String incidentStatusService = "Pendiente";
         String incidentDescription = "Incidencia No. " + txtIncidentId.getText() + ": " + txtIncidentDescription.getText();
         String incidentComments = "";
-        Service serviceData = new Service(null, null, incidentOperator, incidentTypeService, incidentCustomer, incidentStatusService, incidentDescription, incidentComments);
+        Service serviceData = new Service(null, null, incidentOperator, incidentTypeService, incidentCustomer, incidentStatusService, incidentDescription, incidentComments, null);
         incidentIdToService.setText(txtIncidentId.getText());
         navigateCard("formServices");
         updateServiceButton.setEnabled(false);
@@ -3138,29 +3193,31 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void saveCustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCustomerActionPerformed
         String rawAddress = txtCustomerAddress.getText().trim();
-        GeocodingResult result = GoogleMapsService.geocodeAddress(rawAddress);
+        if (!rawAddress.equals(lastInputAddress)) {
+            GeocodingResult result = GoogleMapsService.geocodeAddress(rawAddress);
 
-        if (result == null) {
-            JOptionPane.showMessageDialog(this, "No se pudo validar la dirección. Verifica que sea correcta.", "Dirección no válida", JOptionPane.WARNING_MESSAGE);
-            return;
+            if (result == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo validar la dirección. Verifica que sea correcta.", "Dirección no válida", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "¿Es esta la dirección correcta?\n\n"
+                    + result.formattedAddress + "\n"
+                    + "Lat: " + result.location.getLatitude() + " - Lng: " + result.location.getLongitude(),
+                    "Confirmar dirección",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            txtCustomerAddress.setText(result.formattedAddress);
+            geoLocation = new GeoPoint(result.location.getLatitude(), result.location.getLongitude());
+            cityService = result.city;
         }
-
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "¿Es esta la dirección correcta?\n\n"
-                + result.formattedAddress + "\n"
-                + "Lat: " + result.location.getLatitude() + " - Lng: " + result.location.getLongitude(),
-                "Confirmar dirección",
-                JOptionPane.YES_NO_OPTION
-        );
-
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        txtCustomerAddress.setText(result.formattedAddress);
-        geoLocation = new GeoPoint(result.location.getLatitude(), result.location.getLongitude());
-        cityService = result.city;
 
         if (txtCustomerId.getText().isEmpty()) {
             saveCustomer("new");
@@ -3236,6 +3293,27 @@ public class MainFrame extends javax.swing.JFrame {
         txtSearchByPhone.requestFocus();
     }//GEN-LAST:event_jMenuItem14ActionPerformed
 
+    private void txtCustomerAddressPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_txtCustomerAddressPropertyChange
+    }//GEN-LAST:event_txtCustomerAddressPropertyChange
+
+    private void btnOpenMapsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenMapsActionPerformed
+        String address = txtCustomerAddress.getText().trim();
+
+        if (address.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay dirección para abrir en Google Maps.", "Dirección vacía", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            String encodedAddress = URLEncoder.encode(address, "UTF-8");
+            String url = "https://www.google.com/maps/search/?api=1&query=" + encodedAddress;
+            Desktop.getDesktop().browse(new URI(url));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al intentar abrir Google Maps.", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_btnOpenMapsActionPerformed
+
     private void deleteFileFromStorage(String fileName, String serviceId) {
         try {
             String bucketName = "vd-logistics.firebasestorage.app";
@@ -3266,6 +3344,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton backIncidents;
     private javax.swing.JButton backServices;
     private javax.swing.JButton backUsers;
+    private javax.swing.JButton btnOpenMaps;
     private javax.swing.JComboBox<String> cmbIncidentOperator;
     private javax.swing.JComboBox<String> cmbServiceCustomer;
     private javax.swing.JComboBox<String> cmbServiceOperator;
@@ -3353,6 +3432,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel50;
     private javax.swing.JLabel jLabel51;
     private javax.swing.JLabel jLabel52;
+    private javax.swing.JLabel jLabel53;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;

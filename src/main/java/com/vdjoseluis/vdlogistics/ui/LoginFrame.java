@@ -1,6 +1,9 @@
 package com.vdjoseluis.vdlogistics.ui;
 
 import com.vdjoseluis.vdlogistics.firebase.FirebaseAuthService;
+import java.awt.Image;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -15,6 +18,12 @@ public class LoginFrame extends javax.swing.JFrame {
      */
     public LoginFrame() {
         initComponents();
+        try {
+            Image icon = ImageIO.read(getClass().getResource("/images/logo.png"));
+            setIconImage(icon);
+        } catch (IOException e) {
+            System.err.println("No se pudo cargar el ícono: " + e.getMessage());
+        }
         this.setLocationRelativeTo(null);
         SwingUtilities.invokeLater(() -> jTextFieldEmail.requestFocusInWindow());
     }
@@ -124,17 +133,17 @@ public class LoginFrame extends javax.swing.JFrame {
 
     private void loginUser() {
         String email = this.jTextFieldEmail.getText();
-        String password = new String (this.jPasswordField.getPassword());
-       if (FirebaseAuthService.loginUser(email, password)) {
+        String password = new String(this.jPasswordField.getPassword());
+        if (FirebaseAuthService.loginUser(email, password)) {
             dispose();
             MainFrame home = new MainFrame(email);
-                home.setVisible(true);
-                this.dispose();
+            home.setVisible(true);
+            this.dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Error de autenticación");
-        }     
-    }    
-    
+        }
+    }
+
     /**
      * @param args the command line arguments
      */

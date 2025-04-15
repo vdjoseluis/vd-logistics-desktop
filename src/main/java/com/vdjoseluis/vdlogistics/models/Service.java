@@ -15,6 +15,7 @@ public class Service {
     private String city;
     private String description;
     private String comments;
+    private Date proposedDate;
 
     public Service() {
     }
@@ -28,7 +29,7 @@ public class Service {
         this.city = city;
     }
 
-    public Service(String id, Date date, String operator, String type, String customer, String status, String description, String comments) {
+    public Service(String id, Date date, String operator, String type, String customer, String status, String description, String comments, Date proposedDate) {
         this.id = id;
         this.date = date;
         this.operator = operator;
@@ -37,6 +38,7 @@ public class Service {
         this.status = status;
         this.description = description;
         this.comments = comments;
+        this.proposedDate = proposedDate;
     }
 
     public String getId() {
@@ -125,5 +127,13 @@ public class Service {
 
     public void setComments(String comments) {
         this.comments = comments;
+    }
+    
+    public Date getProposedDate() {
+        return proposedDate;
+    }
+
+    public void setProposedDate(Date date) {
+        this.proposedDate = date;
     }
 }

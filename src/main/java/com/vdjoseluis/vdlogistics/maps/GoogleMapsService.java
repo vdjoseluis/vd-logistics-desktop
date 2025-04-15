@@ -9,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class GoogleMapsService {
@@ -20,11 +21,6 @@ public class GoogleMapsService {
         public String formattedAddress;
         public GeoPoint location;
         public String city;
-
-//        public GeocodingResult(String formattedAddress, GeoPoint location) {
-//            this.formattedAddress = formattedAddress;
-//            this.location = location;
-//        }
     }
 
     public static GeocodingResult geocodeAddress(String inputAddress) {
@@ -36,14 +32,14 @@ public class GoogleMapsService {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            StringBuilder response = new StringBuilder();
-            String inputLine;
-
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
+            StringBuilder response;
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                response = new StringBuilder();
+                String inputLine;
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
             }
-            in.close();
 
             JSONObject json = new JSONObject(response.toString());
 
@@ -76,72 +72,8 @@ public class GoogleMapsService {
 
             return result;
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException | JSONException e) {
             return null;
         }
     }
-
-//    public static String getFormattedAddress(String inputAddress) {
-//        try {
-//            String encodedAddress = java.net.URLEncoder.encode(inputAddress, "UTF-8");
-//            String urlString = "https://maps.googleapis.com/maps/api/geocode/json?address=" + encodedAddress + "&key=" + API_KEY;
-//
-//            URL url = new URL(urlString);
-//            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-//            conn.setRequestMethod("GET");
-//
-//            // Leer respuesta
-//            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-//            String inputLine;
-//            StringBuilder response = new StringBuilder();
-//
-//            while ((inputLine = in.readLine()) != null) {
-//                response.append(inputLine);
-//            }
-//            in.close();
-//
-//            JSONObject json = new JSONObject(response.toString());
-//            String status = json.getString("status");
-//
-//            if (!status.equals("OK")) {
-//                System.err.println("❌ Error en la respuesta de Google Maps: " + status);
-//                return null;
-//            }
-//
-//            JSONObject firstResult = json.getJSONArray("results").getJSONObject(0);
-//            JSONArray components = firstResult.getJSONArray("address_components");
-//
-//            boolean hasRoute = false;
-//            boolean hasNumber = false;
-//            boolean hasLocality = false;
-//
-//            for (int i = 0; i < components.length(); i++) {
-//                JSONArray types = components.getJSONObject(i).getJSONArray("types");
-//                for (int j = 0; j < types.length(); j++) {
-//                    String type = types.getString(j);
-//                    if (type.equals("route")) {
-//                        hasRoute = true;
-//                    }
-//                    if (type.equals("street_number")) {
-//                        hasNumber = true;
-//                    }
-//                    if (type.equals("locality")) {
-//                        hasLocality = true;
-//                    }
-//                }
-//            }
-//
-//            if (hasRoute && hasNumber && hasLocality) {
-//                return firstResult.getString("formatted_address");
-//            } else {
-//                System.err.println("❌ Dirección incompleta: falta calle, número o localidad.");
-//                return null;
-//            }
-//
-//        } catch (IOException e) {
-//            System.err.println("Error al conectar con Google Maps: " + e.getMessage());
-//            return null;
-//        }
-//    }
 }

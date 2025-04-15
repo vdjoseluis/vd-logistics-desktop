@@ -4,14 +4,11 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
 import com.vdjoseluis.vdlogistics.models.Customer;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -158,7 +155,6 @@ public class DataCustomer {
         } catch (InterruptedException | ExecutionException e) {
             System.err.println("❌ Error al obtener servicio: " + e.getMessage());
         }
-        System.out.println(customerIds);
         return customerIds;
     }
 
@@ -198,8 +194,10 @@ public class DataCustomer {
             data.put("phone", customer.getPhone());
             data.put("address", customer.getAddress());
             data.put("addressAdditional", customer.getAdditional());
-            data.put("location", geoLocation);
-            data.put("city", customer.getCity());
+            if (geoLocation != null) {
+                data.put("location", geoLocation);
+                data.put("city", customer.getCity());
+            }
 
             docRef.update(data).get();
             DataLog.registerLog(userEmail, "Actualiza datos clientes", docRef.getId());
@@ -224,6 +222,5 @@ public class DataCustomer {
             return false;
         }
     }
-   
 
 }
