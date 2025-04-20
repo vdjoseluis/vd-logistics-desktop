@@ -1,2 +1,5 @@
 .env
 firebase-adminsdk.json
+target/.env
+target/firebase-adminsdk.json
+

@@ -34,6 +34,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -168,6 +170,20 @@ public class MainFrame extends javax.swing.JFrame {
         tempListModel.clear();
     }
 
+    private boolean isValidPhone(String inputPhone) {
+        String regex = "^[67]\\d{8}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(inputPhone);
+        return (matcher.matches());
+    }
+
+    private boolean isValidEmail(String inputEmail) {
+        String regex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(inputEmail);
+        return (matcher.matches());
+    }
+
     private void createUser() {
         String email = txtUserEmail.getText();
         String password = new String(txtUserPassword.getPassword());
@@ -179,6 +195,18 @@ public class MainFrame extends javax.swing.JFrame {
 
         if (email.isEmpty() || password.isEmpty() || firstName.isEmpty() || lastName.isEmpty() || phone.isEmpty() || address.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (!isValidPhone(phone)) {
+            JOptionPane.showMessageDialog(this, "Número de teléfono no válido", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+            txtUserPhone.requestFocus();
+            return;
+        }
+
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Correo electrónico no válido", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+            txtUserEmail.requestFocus();
             return;
         }
 
@@ -377,6 +405,18 @@ public class MainFrame extends javax.swing.JFrame {
 
         if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (!isValidPhone(phone)) {
+            JOptionPane.showMessageDialog(this, "Número de teléfono no válido", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+            txtCustomerPhone.requestFocus();
+            return;
+        }
+
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Correo electrónico no válido", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+            txtCustomerEmail.requestFocus();
             return;
         }
 
@@ -2771,6 +2811,12 @@ public class MainFrame extends javax.swing.JFrame {
             String address = txtUserAddress.getText();
             String type = comboUserType.getSelectedItem().toString();
 
+            if (!isValidPhone(phone)) {
+                JOptionPane.showMessageDialog(this, "Número de teléfono no válido", "VD Logistics", JOptionPane.WARNING_MESSAGE);
+                txtUserPhone.requestFocus();
+                return;
+            }
+
             boolean success = DataUser.updateUser(userId, firstName, lastName, phone, address, type);
             if (success) {
                 JOptionPane.showMessageDialog(this, "Usuario actualizado correctamente", "VD Logistics", JOptionPane.INFORMATION_MESSAGE);
@@ -3131,6 +3177,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         navigateCard("formIncidents");
         updateIncidentButton.setEnabled(false);
+        txtIncidentDescription.requestFocus();
         showIncidentForm(incidentData, true);
     }//GEN-LAST:event_newIncidentFromServiceButtonActionPerformed
 
@@ -3142,7 +3189,6 @@ public class MainFrame extends javax.swing.JFrame {
         clearForm(formCustomersPanel);
         enabledDashboardButtons();
         createCustomerButton.setEnabled(false);
-        //newIncidentFromServiceButton.setEnabled(false);
         txtCustomerFirstName.requestFocus();
     }//GEN-LAST:event_createCustomerButtonActionPerformed
 

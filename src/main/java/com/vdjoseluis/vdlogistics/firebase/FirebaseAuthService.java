@@ -10,7 +10,6 @@ import java.util.Scanner;
 
 public class FirebaseAuthService {
     private static final String API_KEY = ConfigLoader.get("FIREBASE_API_KEY");  
-    private static final Firestore db = FirebaseConfig.getFirestore();
 
     public static boolean loginUser(String email, String password) {
         try {
@@ -40,7 +39,6 @@ public class FirebaseAuthService {
             }
             scanner.close();
 
-            // Si la respuesta contiene un token, el login fue exitoso
             JSONObject jsonResponse = new JSONObject(response.toString());
             if (jsonResponse.has("idToken")) {
                 System.out.println("✅ Login exitoso: " + email);

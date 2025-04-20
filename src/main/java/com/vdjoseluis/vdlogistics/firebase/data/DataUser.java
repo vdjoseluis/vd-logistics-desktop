@@ -7,6 +7,7 @@ import com.google.firebase.auth.UserRecord;
 import com.vdjoseluis.vdlogistics.firebase.FirebaseConfig;
 import com.vdjoseluis.vdlogistics.models.User;
 import com.vdjoseluis.vdlogistics.ui.LoginFrame;
+import java.awt.HeadlessException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -21,6 +22,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
 public class DataUser {
+
+    public class SessionManager {
+        public static String currentUserId;
+    }
 
     private static final Firestore db = FirebaseConfig.getFirestore();
 
@@ -157,7 +162,7 @@ public class DataUser {
         }
         return null;
     }
-    
+
     public static final Map<String, String> operatorMap = new HashMap<>();
 
     public static void listenForOperatorNames(JComboBox<String> combo) {
@@ -180,7 +185,7 @@ public class DataUser {
                         });
                     }
                 });
-    }    
+    }
 
     public static boolean updateUser(String userId, String firstName, String lastName, String phone, String address, String type) {
         try {
@@ -202,22 +207,38 @@ public class DataUser {
     }
 
     public static boolean deleteUser(String userId, JFrame currentFrame) {
+//        try {
+//            UserRecord currentUser = FirebaseAuth.getInstance().getUser(userId);
+//            String currentUserId = FirebaseAuth.getInstance().getUserByEmail(currentUser.getEmail()).getUid();
+//
+//            db.collection("users").document(userId).delete().get();
+//            FirebaseAuth.getInstance().deleteUser(userId);
+//            System.out.println("Usuario eliminado correctamente");
+//
+//            if (currentUserId.equals(userId)) {
+//                JOptionPane.showMessageDialog(null, "Tu cuenta ha sido eliminada. Se cerrará la sesión.");
+//                currentFrame.dispose();
+//                new LoginFrame().setVisible(true);
+//            }
+//
+//            return true;
+//        } catch (FirebaseAuthException | HeadlessException | InterruptedException | ExecutionException e) {
+//            System.err.println("Error al eliminar usuario: " + e.getMessage());
+//            return false;
+//        }
         try {
-            UserRecord currentUser = FirebaseAuth.getInstance().getUser(userId);
-            String currentUserId = FirebaseAuth.getInstance().getUserByEmail(currentUser.getEmail()).getUid();
-
             db.collection("users").document(userId).delete().get();
             FirebaseAuth.getInstance().deleteUser(userId);
             System.out.println("Usuario eliminado correctamente");
 
-            if (currentUserId.equals(userId)) {
+            if (SessionManager.currentUserId != null && SessionManager.currentUserId.equals(userId)) {
                 JOptionPane.showMessageDialog(null, "Tu cuenta ha sido eliminada. Se cerrará la sesión.");
                 currentFrame.dispose();
                 new LoginFrame().setVisible(true);
             }
 
             return true;
-        } catch (Exception e) {
+        } catch (FirebaseAuthException | HeadlessException | InterruptedException | ExecutionException e) {
             System.err.println("Error al eliminar usuario: " + e.getMessage());
             return false;
         }

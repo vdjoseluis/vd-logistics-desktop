@@ -171,7 +171,7 @@ public class DataIncident {
             data.put("description", incident.getDescription());
             data.put("refOperator", db.collection("users").document(operatorId));
             data.put("refService", db.collection("services").document(incident.getService()));
-            data.put("status", incident.getStatus());
+             if (incident.getStatus()!= null)  data.put("status", incident.getStatus());
 
             docRef.update(data).get();
             DataLog.registerLog(userEmail, "Actualiza incidencia", docRef.getId());
